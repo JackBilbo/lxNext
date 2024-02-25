@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx rollup -c"
+    "build": "npx rollup -c",
+    "build-main": "npx rollup -c rollup-main.config.js",
+    "dev-main": "npx rollup --watch -c rollup-main.config.js"
   },
   "keywords": [],
   "author": "",
