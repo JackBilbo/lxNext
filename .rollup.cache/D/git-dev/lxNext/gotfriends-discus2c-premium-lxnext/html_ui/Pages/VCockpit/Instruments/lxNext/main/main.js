@@ -4,11 +4,13 @@ import './styles.scss';
 import { FSComponent, EventBus } from '@microsoft/msfs-sdk';
 import { MyComponent } from './components/myComponent';
 import { Units } from './vars';
+import { Navmap } from './modules/map.js';
 class lxnext extends BaseInstrument {
     constructor() {
         super();
         this.eventBus = new EventBus();
         this.unittype = 'metric';
+        this.Navmap = new Navmap(this);
     }
     get templateID() {
         return 'lxnext';
@@ -24,6 +26,7 @@ class lxnext extends BaseInstrument {
             this.toggleUnits();
             unitswitch.innerHTML = Units.speed.pref;
         });
+        this.Navmap.initMap();
         this.eventBus.getPublisher().pub('masterunits', Units.speed.imperial ? "metric" : "imperial");
         FSComponent.render(FSComponent.buildComponent(MyComponent, { bus: this.eventBus, variable: 'indicated_airspeed', unittype: Units.speed, threshold: 20 }), document.getElementById('mainframe'));
         FSComponent.render(FSComponent.buildComponent(MyComponent, { bus: this.eventBus, variable: 'altitude', unittype: Units.altitude, threshold: 20 }), document.getElementById('mainframe'));
@@ -33,6 +36,7 @@ class lxnext extends BaseInstrument {
     }
     Update() {
         super.Update();
+        this.Navmap.update();
         this.eventBus.getPublisher().pub('indicated_airspeed', SimVar.GetSimVarValue('AIRSPEED INDICATED', Units.speed[this.unittype]));
         this.eventBus.getPublisher().pub('altitude', SimVar.GetSimVarValue('INDICATED ALTITUDE', Units.altitude[this.unittype]));
     }

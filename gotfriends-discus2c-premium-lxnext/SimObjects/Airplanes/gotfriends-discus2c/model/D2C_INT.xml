@@ -894,7 +894,7 @@
 							(A:PLANE BANK DEGREES, radians) (A:ROTATON VELOCITY BODY Y, radians per second) + 250 * l1 10 * 20 min -20 max + (&gt;A:AILERON TRIM PCT, percent)
 						}
 					}
-					(A:TOW PLANE CONNECTION, Bool) ! (SIM ON GROUND, Bool) ! and (A:TOTAL WORLD VELOCITY, meters per second) 15 &gt; and
+					(A:TOW PLANE CONNECTION, Bool) ! (A:TOW WINCH CONNECTION, Bool) ! and (SIM ON GROUND, Bool) ! and (A:TOTAL WORLD VELOCITY, meters per second) 15 &gt; and
 					if{ 1 (&gt;K:TOW_PLANE_RELEASE) 1 (&gt;L:TOW_HANDLE, bool) }
 				</UPDATE_CODE>
 			</UseTemplate>
@@ -1173,6 +1173,93 @@
 <!-- ###################################### -->
 <!-- # JACKBILBO REPLACEMENT LX NAV KNOBS # -->
 <!-- ###################################### -->
+
+<Component ID="LX_SOFTKEY_1" 			Node="INT_LXNAV_SOFTKEY_1">
+			<UseTemplate Name="ASOBO_GT_Switch_Code">
+				<PART_ID>INT_LXNAV_SOFTKEY_1</PART_ID>
+				<ANIM_NAME>UOM_Toggle</ANIM_NAME>
+				<ANIM_CODE>(L:UNITS_IMPERIAL, bool) 1 == if{ 100 } els{ 0 }</ANIM_CODE>
+				<ANIMTIP_0>UNITS (METRIC)</ANIMTIP_0>
+				<ANIMTIP_1>UNITS (IMPERIAL)</ANIMTIP_1>
+				<WWISE_EVENT_1>navcom_volume_knob_push_button_on</WWISE_EVENT_1>
+				<WWISE_EVENT_2>navcom_volume_knob_push_button_off</WWISE_EVENT_2>
+				<ANIM_LENGTH>100</ANIM_LENGTH>
+				<LEFT_SINGLE_CODE>(L:UNITS_IMPERIAL, bool) 1 == if{ 0.01 (&gt;L:UNITS_IMPERIAL, bool) } els{ 1 (&gt;L:UNITS_IMPERIAL, bool) }</LEFT_SINGLE_CODE>
+			</UseTemplate>
+		</Component>
+		<Component ID="LX_SOFTKEY_2" 	Node="INT_LXNAV_SOFTKEY_2">
+			<UseTemplate Name="ASOBO_GT_Switch_Code">
+				<PART_ID>INT_LXNAV_SOFTKEY_2</PART_ID>
+				<ANIM_NAME>Towplane_Toggle</ANIM_NAME>
+				<ANIM_CODE>(L:LX_SOFTKEY_2, bool) 1 == if{ 0 } els{ 1 }</ANIM_CODE>
+				<ANIM_LAG>500</ANIM_LAG>
+				<ANIMTIP_0>SOFTKEY</ANIMTIP_0>
+				<ANIMTIP_1></ANIMTIP_1>
+				<WWISE_EVENT_1>landing_light_switch_on</WWISE_EVENT_1>
+				<WWISE_EVENT_2>landing_light_switch_off</WWISE_EVENT_2>
+				<LEFT_SINGLE_CODE>(L:LX_SOFTKEY_2, bool) 1 == if{ 0 } els{ 1 }</LEFT_SINGLE_CODE>
+			</UseTemplate>
+		</Component>			
+		<Component ID="LX_SOFTKEY_3" 		Node="INT_LXNAV_SOFTKEY_3">
+			<UseTemplate Name="ASOBO_GT_Switch_Code">
+				<PART_ID>INT_LXNAV_SOFTKEY_3</PART_ID>
+				<ANIM_NAME>CANOPY_TOGGLE</ANIM_NAME>
+				<ANIM_CODE>(L:CANOPY_TOGGLE) 100 *</ANIM_CODE>
+				<ANIMTIP_0>CANOPY TINT (ON)</ANIMTIP_0>
+				<ANIMTIP_1>CANOPY TINT (OFF)</ANIMTIP_1>
+				<WWISE_EVENT_1>navcom_volume_knob_push_button_on</WWISE_EVENT_1>
+				<WWISE_EVENT_2>navcom_volume_knob_push_button_off</WWISE_EVENT_2>
+				<LEFT_SINGLE_CODE>(L:CANOPY_TOGGLE) ! (&gt;L:CANOPY_TOGGLE)</LEFT_SINGLE_CODE>
+			</UseTemplate>
+		</Component>
+		<Component ID="LX_SOFTKEY_4" Node="INT_LXNAV_SOFTKEY_4">
+            <UseTemplate Name="ASOBO_GT_Switch_Code">
+                <PART_ID>INT_LXNAV_SOFTKEY_4</PART_ID>
+                <ANIM_NAME>OXYGEN_TOGGLE</ANIM_NAME>
+                <ANIM_CODE>(L:OXYGEN_TOGGLE) 100 *</ANIM_CODE>
+                <ANIMTIP_0>OXYGEN TANK (REMOVED)</ANIMTIP_0>
+                <ANIMTIP_1>OXYGEN TANK (AVAILABLE)</ANIMTIP_1>
+                <WWISE_EVENT_1>navcom_volume_knob_push_button_on</WWISE_EVENT_1>
+                <WWISE_EVENT_2>navcom_volume_knob_push_button_off</WWISE_EVENT_2>
+                <LEFT_SINGLE_CODE>
+                    (L:OXYGEN_TOGGLE) ! (&gt;L:OXYGEN_TOGGLE)
+                    0 (&gt;L:OXYGEN_KNOB)
+                </LEFT_SINGLE_CODE>
+            </UseTemplate>
+        </Component>
+        <Component ID="LX_SOFTKEY_5" 		Node="INT_LXNAV_SOFTKEY_5">
+			<UseTemplate Name="ASOBO_GT_Switch_Code">
+				<PART_ID>INT_LXNAV_SOFTKEY_5</PART_ID>
+				<ANIM_NAME>WINGLET_TOGGLE</ANIM_NAME>
+				<ANIM_CODE>(L:NAV_TOGGLE) 100 *</ANIM_CODE>
+				<ANIMTIP_0>INOP (Navigation Lights)</ANIMTIP_0>
+				<ANIMTIP_1>INOP (Navigation Lights)</ANIMTIP_1>
+				<WWISE_EVENT_1>navcom_volume_knob_push_button_on</WWISE_EVENT_1>
+				<WWISE_EVENT_2>navcom_volume_knob_push_button_off</WWISE_EVENT_2>
+				<LEFT_SINGLE_CODE>
+					(L:NAV_TOGGLE) ! (&gt;L:NAV_TOGGLE)
+					0 (&gt;A:LIGHT WING, bool)				
+				</LEFT_SINGLE_CODE>
+			</UseTemplate>
+		</Component>
+        <Component ID="LX_SOFTKEY_6" 		Node="INT_LXNAV_SOFTKEY_6">
+            <UseTemplate Name="ASOBO_GT_Switch_Code">
+                <PART_ID>INT_LXNAV_SOFTKEY_6</PART_ID>
+                <ANIM_NAME>COVER_TOGGLE</ANIM_NAME>
+				<ANIM_CODE>(L:COVER_TOGGLE, number) 1 == if{ 100 } els{ 0 }</ANIM_CODE>
+                <ANIMTIP_0>CANOPY COVER (STOWED)</ANIMTIP_0>
+                <ANIMTIP_1>CANOPY COVER (PLACED)</ANIMTIP_1>
+				<WWISE_EVENT_1>navcom_volume_knob_push_button_on</WWISE_EVENT_1>
+				<WWISE_EVENT_2>navcom_volume_knob_push_button_off</WWISE_EVENT_2>
+                <LEFT_SINGLE_CODE>
+					(L:COVER_TOGGLE, number) 1 == if{ 0 (&gt;L:COVER_TOGGLE, number) } els{ 1 (&gt;L:COVER_TOGGLE, number) }
+                </LEFT_SINGLE_CODE>
+            </UseTemplate>
+        </Component>
+
+		<!-- ################################# -->
+
+
         <Component ID="GOT_FRIENDS_BUTTON_FIX">
             <UseTemplate Name="ASOBO_GT_Update">
                 <UPDATE_CODE>
@@ -1203,7 +1290,7 @@
 				</CLOCKWISE_CODE>
 				<ANIMCURSOR_DIR>1.0</ANIMCURSOR_DIR>
 				<ANIMCURSOR_MIN>0.1</ANIMCURSOR_MIN>
-				<TOOLTIPID>MAP ZOOM</TOOLTIPID>
+				<TOOLTIPID>VOLUME</TOOLTIPID>
 				<COUNT>10</COUNT>
 			</UseTemplate>
 		</Component>
@@ -1239,7 +1326,7 @@
 				</CLOCKWISE_CODE>
 				<ANIMCURSOR_DIR>1.0</ANIMCURSOR_DIR>
 				<ANIMCURSOR_MIN>0.1</ANIMCURSOR_MIN>
-				<TOOLTIPID>PAGE LEFT/RIGHT</TOOLTIPID>
+				<TOOLTIPID>MAP ZOOM</TOOLTIPID>
 				<COUNT>10</COUNT>
 			</UseTemplate>
 		</Component>

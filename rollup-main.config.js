@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import resolve from '@rollup/plugin-node-resolve';
 import styles from "rollup-plugin-styles";
+import commonjs from '@rollup/plugin-commonjs';
 
 export default {
     input: {
@@ -14,7 +15,8 @@ export default {
     },
     plugins: [
         resolve(), 
-        typescript(), 
+        typescript(),
+        commonjs(), 
         styles({
             mode: ["extract", "styles.css"],
          })
