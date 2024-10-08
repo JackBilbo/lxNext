@@ -1,0 +1,115 @@
+.windindicator {
+    position: relative;
+    --maincolor: rgba(255,255,255,0.8);
+    --baselength: calc(var(--rootsize) - 2rem);
+
+    .heading {
+        position: absolute;
+        left: calc(var(--baselength) / 2);
+        transform: translate(-50%,0);
+        top: 0;
+        color: var(--maincolor);
+        background-color: rgba(0,0,0,0.1);
+        padding: 0.1rem 0.5rem;
+
+    }
+}
+
+.windrose {
+    position: absolute;
+    top: 2rem;
+    left: 0;
+
+    border-radius: 50%;
+    height: var(--baselength);
+    width: var(--baselength);
+    background-color: rgba(0,0,0,0.1);
+    transform-origin: 50% 50%;
+
+    .tick {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        height: 1em;
+        color: var(--maincolor);
+        text-align: center;
+        text-indent: -0.4em;
+        margin-top: calc(-1 * var(--baselength) / 2);
+        transform-origin: 0 calc(var(--baselength) / 2);
+        line-height: 0.8;
+    }
+
+    .tick.shortempty {
+        width: 0;
+        height: 0.5em;
+        border: 1px solid var(--maincolor);
+    }
+
+    .tick.longempty {
+        width: 0;
+        height: 1em;
+        border: 1px solid var(--maincolor);
+    }
+
+    .arrow {
+        position: absolute;
+        left: calc(50% - 3px);
+        top: 50%;
+        margin-top: calc((-1.25 * var(--baselength) / 2) / 2);
+        width: 0;
+        background: #fff;
+        border: 0.2em solid #fff;
+        height: calc(1.25 * var(--baselength) / 2);
+        transform-origin: 3px 50%;
+        transform: rotate(0deg);
+
+        svg {
+            position: absolute;
+            top: -0.6em;
+            left: -1em;
+            width: 2em;
+            transform: rotate(180deg);
+            fill: #fff;
+        }
+    }
+
+    .direction, .velocity {
+        border: 1px solid var(--maincolor);
+        text-align: center;
+        width: 3em;
+        color: var(--maincolor);
+        position: absolute;
+        top:50%;
+        left: 0.7em;
+        margin-top: -0.75em;
+        transform-origin: 50% 50%;
+        font-size: 1.3em;
+        line-height: 1.2;
+        span { font-size: 0.5em;}
+    }
+
+    .direction {
+        right: 1em;
+        left: auto;
+    }
+
+    .groundtrack, .courseline {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 0;
+        border: 1px solid #ff22dd;
+        height: calc(var(--baselength) / 2);
+        transform-origin: 0 100%;
+        transform: rotate(10deg);
+        opacity: 0.8;
+    }
+
+    .courseline {
+        border-color: #FF9D1E;
+        transform: rotate(-30deg);
+        &.off {
+            display: none;
+        }
+    }
+}

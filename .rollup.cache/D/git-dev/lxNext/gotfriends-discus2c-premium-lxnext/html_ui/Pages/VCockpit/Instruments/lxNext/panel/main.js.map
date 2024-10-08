@@ -1,0 +1,1 @@
+{"version":3,"file":"main.js","sourceRoot":"","sources":["../../../../../../../src/panel/main.tsx"],"names":[],"mappings":"AAAA,OAAO,eAAe,CAAC;AAEvB,OAAO,CAAC,GAAG,CAAC,KAAK,CAAC,CAAC","sourcesContent":["import './styles.scss';\r\n\r\nconsole.log('Foo');"]}

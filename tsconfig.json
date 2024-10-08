@@ -7,10 +7,13 @@
     "esModuleInterop": true, /* Emits additional JS to work with CommonJS modules */
     "skipLibCheck": true, /* Skip type checking on library .d.ts files */
     "forceConsistentCasingInFileNames": true, /* Ensures correct import casing */
-    "outDir": "gotfriends-discus2c-premium-lxnext/html_ui/Pages/VCockpit/Instruments/lxNext", /* Sets the output folder to ./build */
+    /* "outDir": "gotfriends-discus2c-premium-lxnext/html_ui/Pages/VCockpit/Instruments/lxNext",  Sets the output folder to ./build */
+    "outDir": "dist",
     "moduleResolution": "node", /* Enables compatibility with MSFS SDK bare global imports */
     "jsxFactory": "FSComponent.buildComponent", /* Required for FSComponent framework JSX */
     "jsxFragmentFactory": "FSComponent.Fragment", /* Required for FSComponent framework JSX */
     "jsx": "react" /* Required for FSComponent framework JSX */
-  }
+    
+  },
+  "exclude": ["./src/panel/components/localstorage.tsx"]
 }

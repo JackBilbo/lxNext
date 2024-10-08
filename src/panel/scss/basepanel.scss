@@ -1,0 +1,23 @@
+
+  
+  ingame-ui-header {
+    position: absolute;
+    top: -10rem;
+  }
+  
+  
+  ingame-ui#CustomPanel {
+    background: transparent;
+    pointer-events: none;
+    height:100% !important;
+    width: 100% !important;
+  }
+  
+  #CustomPanel.interact {
+    border: 3px solid green;
+    pointer-events: auto;
+  }
+  
+  ingame-ui-header {
+    pointer-events: auto;
+  }

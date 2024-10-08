@@ -1,0 +1,106 @@
+.grid-stack {
+    width: 100%;
+    height: 100%;
+}
+
+div.grid-stack-item {
+    --rootsize: 2rem;
+    .interact & {
+        border: 2px solid lightblue;
+    }
+
+    .close {
+        position: absolute;
+        right: 0;
+        top: 0;
+        padding: 0.2em;
+        background-color: #cc0000;
+        color: white;
+        cursor: pointer;
+        text-decoration: none;
+        width: 2.5rem;
+        text-align:center;
+        display: none;
+
+        .interact & {
+            display: block;
+        }
+    }
+}
+
+@use "sass:math";
+.grid-stack > .grid-stack-item {
+
+  $gridstack-columns: 24;
+
+  min-width: 100%/$gridstack-columns;
+
+  @for $i from 0 through $gridstack-columns {
+    &[gs-w='#{$i}'] { width: (100% / $gridstack-columns) * $i; }
+    &[gs-x='#{$i}'] { left: (100% / $gridstack-columns) * $i; }
+    &[gs-min-w='#{$i}'] { min-width: (100% / $gridstack-columns) * $i; }
+    &[gs-max-w='#{$i}'] { max-width: (100% / $gridstack-columns) * $i; }
+  }
+} 
+
+.grid-stack>.grid-stack-item>.ui-resizable-handle {
+    display: none !important;
+    .interact & {
+        display: block !important;
+    }
+}
+
+.grid-stack > .grid-stack-item > .grid-stack-item-content {
+    overflow: visible !important;
+}
+
+.lxnwidget {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    &[data-type="toolbar"] {
+        overflow: visible;
+    }
+}
+
+.datafield  {
+    user-select: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    font-size: 1.5rem;
+    text-shadow: rgba(0,0,0,0.4) 1px 1px 1px;
+
+    .label {
+        padding-top: 0.2em;
+        width: 100%;
+        font-size: 0.7em;
+        text-align: center;
+        text-transform: uppercase;
+    }
+    .value {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        padding: 0.5em;
+        align-items: baseline;
+        justify-content: center;
+    }
+    .number {
+        font-size: 3.125rem;
+        font-size: calc(var(--rootsize) * 0.6);
+        line-height: calc(var(--rootsize) - 53px);
+    }
+
+    .unit {
+        font-size: 0.7em;
+        vertical-align: baseline;
+    }
+
+    
+
+}

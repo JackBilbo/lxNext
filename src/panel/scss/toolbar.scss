@@ -1,0 +1,60 @@
+.toolbar {
+    pointer-events: all;
+    background-color: #222;
+    padding: calc(var(--rootsize) * 0.25) 0.5rem calc(var(--rootsize) * 0.25) 0.5rem;
+    display: inline-block;
+    position: relative;
+
+    button {
+        height: calc(var(--rootsize) * 0.5);
+        width: calc(var(--rootsize) * 0.5);
+        line-height: calc(var(--rootsize) * 0.5);
+        text-align: center;
+        font-size: calc(var(--rootsize) * 0.2);
+    }
+
+    #widgetmenu {
+        display: none;
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        left: 0;
+        width: 100%;
+        background-color: #222;
+        padding: 0.5rem;
+        flex-direction: column;
+
+        &.istop {
+            bottom: auto;
+            top: 100%;
+        }
+
+        button {
+            width: 100%;
+        }
+
+        .interact &.active {
+            display: flex;
+        }
+    }
+}
+
+button {
+    width: 2rem;
+    height: 2rem;
+    line-height: 2rem;
+    text-align: center;
+    background-color: #444;
+    color: #fff;
+    cursor: pointer;
+    margin-right: 0.25rem;
+    &:last-child {
+        margin-right: 0;
+    }
+
+    &[disabled] {
+        pointer-events: none;
+        background-color: #444;
+        color: #999;
+    }
+}
