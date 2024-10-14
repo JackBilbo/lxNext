@@ -18,16 +18,20 @@ import { updateCustomVars} from './components/customvars';
 import { Datafieldeditor } from './components/interface';
 import { Navmap } from './components/interface';
 
-import { Navpanel } from './components/navpanel';
+import { Navpanel, ownPosition } from './components/navpanel';
 
+import { Keybinds } from './components/keybinds';
 
 
 class lxnext  {
-
     private readonly eventBus = new EventBus();
     private selectedunits = 'metric';  
     private grid;
     private root: HTMLElement = document.getElementById('CustomPanel')!;
+    public keybinds: Keybinds = new Keybinds(this.eventBus);
+
+    private Navpanelref = FSComponent.createRef<Navpanel>();
+
     constructor() {
         this.grid = GridStack.init({
             float: true,
@@ -51,6 +55,8 @@ class lxnext  {
         
             this.grid.getGridItems().forEach((item) => {
                 item.style.setProperty('--rootsize', item.clientHeight + 'px');
+                item.style.setProperty('--rootwidth', item.clientWidth + 'px');
+                item.style.setProperty('--rootheight', item.clientHeight + 'px');
                 const container = item.querySelector(".lxnwidget") as HTMLElement;
                 if(container && container.dataset.type) {
                     const variable = container.dataset.variable? container.dataset.variable : null;
@@ -65,7 +71,7 @@ class lxnext  {
                     if(target.classList.contains("close") && target.closest(".grid-stack-item")) {
                         this.grid.removeWidget(target.closest(".grid-stack-item") as HTMLElement);
                     } else if(target.closest(".lxnwidget")?.getAttribute("data-type") == "datafield") {
-                        Datafieldeditor.editDatafield(target.closest(".lxnwidget") as HTMLElement);
+                        Datafieldeditor.instance.editDatafield(target.closest(".lxnwidget") as HTMLElement);
                     } 
                 }
             })
@@ -79,18 +85,16 @@ class lxnext  {
 
             Navmap?.checker();
 
-            Navpanel.init();
+            FSComponent.render(<Navpanel bus={this.eventBus} ref={this.Navpanelref} />, this.root);
+            this.keybinds.listen();
         })
-              
-
       }
-
 
     public async Update(): Promise<void> {
         updateCustomVars();
 
         vars.map(v => {
-            const val = SimVar.GetSimVarValue(v.simvar, Units[v.unittype][simUnits].simunit);
+            let val = SimVar.GetSimVarValue(v.simvar, Units[v.unittype][simUnits].simunit);
             this.eventBus.getPublisher<FSEvents>().pub(v.name as keyof FSEvents, val);
             v.value = val;
         })  
@@ -98,12 +102,16 @@ class lxnext  {
         if(Navmap && Navmap.isvisible) { 
             Navmap?.update();
         }
+
+        ownPosition.set(SimVar.GetSimVarValue("A:PLANE LATITUDE", "degrees"), SimVar.GetSimVarValue("A:PLANE LONGITUDE", "degrees"));
         
         const n = await SimVar.GetSimVarValue("E:UNITS OF MEASURE", "number");
         if(simUnits != n) {
             this.eventBus.getPublisher<FSEvents>().pub('simUnits', n);
             setSimUnits(n);
         }
+
+        this.Navpanelref.instance?.update();
     }
 
 

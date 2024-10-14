@@ -9,10 +9,11 @@ interface DatafieldProps extends ComponentProps {
 
 export class Datafield extends DisplayComponent<DatafieldProps> {
   
-  private readonly value: Subscribable<number>;
+  private value: Subscribable<number>;
   private readonly varobj = vars.find((v) => v.name == this.props.variable);
 
   private unit = Subject.create<string>(Units[this.varobj!.unittype][simUnits].label);
+  private stringout = Subject.create<string>('00:00:00');
   private readonly elementRef = FSComponent.createRef<HTMLDivElement>();
 
   constructor(props: DatafieldProps) {
@@ -23,8 +24,16 @@ export class Datafield extends DisplayComponent<DatafieldProps> {
     const unittype = subscriber.on('simUnits').whenChanged().handle((mu) => {
         this.unit.set(Units[this.varobj!.unittype][mu].label);  
     });
+
+    if(this.varobj!.unittype == 'time') {
+      subscriber.on(this.props.variable).whenChanged().handle((value) => {
+        this.stringout.set(this.formatValue(value));
+      })
+    
+    }
   
     this.value = ConsumerSubject.create(consumer, 0);
+
   }
 
   public render(): VNode {
@@ -32,7 +41,7 @@ export class Datafield extends DisplayComponent<DatafieldProps> {
       <div ref={this.elementRef} class="datafield">
         <span class="label">{this.varobj?.shortlabel}</span>
         <span class="value">
-          <span class="number">{this.value}</span>
+          <span class="number">{this.varobj!.unittype == 'time' ? this.stringout : this.value}</span>
           <span class="unit">{this.unit}</span>
         </span>
         <a href="#" class="close">x</a>
@@ -45,8 +54,12 @@ export class Datafield extends DisplayComponent<DatafieldProps> {
   
 
   }
- public formatValue(value: number): string {
-  console.log(value);
-    return value.toFixed(this.varobj!.precision);
+ public formatValue(val: number): string {
+    let prefix = val < 0 ? "-" : "";
+    let time = Math.abs(val);
+    let seconds = Math.floor(time % 60);
+    let minutes = Math.floor((time / 60) % 60);
+    let hours = Math.floor(Math.min(time / 3600, 99));
+    return prefix + hours + ":" + ("0" + minutes).substr(-2) + ":" + ("0" + seconds).substr(-2);
   }
 }

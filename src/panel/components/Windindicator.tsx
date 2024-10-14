@@ -36,7 +36,11 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
         });
 
         const textfieldstyle = subscriber.on('heading').withPrecision(0).whenChanged().handle((hdg) => {
-            this.textfieldstyle.set(`transform: rotate(${-1 * (this.winddirection.get() - hdg + 180)}deg);`);
+            try {
+                this.textfieldstyle.set(`transform: rotate(${-1 * (this.winddirection.get() - hdg + 180)}deg);`);
+            } catch (e) {
+                
+            }
         });
 
         const unittype = subscriber.on('simUnits').whenChanged().handle((mu) => {
@@ -74,7 +78,6 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
         
 
         this.winddirection.sub(winddir => {
-            console.log(winddir);
             dirfield.style.transform = `rotate(-${winddir - this.heading.get() +180}deg)`;
             speedfield.style.transform = `rotate(-${winddir - this.heading.get() +180}deg)`;
         })

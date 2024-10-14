@@ -104,6 +104,14 @@ export class Mapcontainer {
         this.map.invalidateSize()
     }
 
+    public zoomIn() {
+        this.map.zoomIn();
+    }
+
+    public zoomOut() {
+        this.map.zoomOut();
+    }
+
     public render(): void {
         const mapcontainer = document.createElement('div');
         const mapelement = document.createElement('div');

@@ -1,0 +1,77 @@
+.panel {
+    pointer-events: auto;
+    display: block;
+    position: absolute;
+    top: 5%;
+    left: -100%;
+    width: 800px;
+    height: 90%;
+    background-color: #222222ee;
+    z-index: 1000;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    border-radius: 5px;
+    padding-top: 4rem;
+    transition: all 0.25s;
+
+    &.active {
+        left: 5%; 
+    }
+
+    .tabs {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4rem;
+        display: flex;
+        flex-direction: row;
+
+        button {
+            width: 50%;
+            height: 4rem;
+            border: 1px solid #333333;
+            line-height: 3.5rem;
+            text-align: center;
+            font-size: 1.2rem;
+            &:hover {
+                background-color: #333333;
+            }
+
+            &.active {  
+                background-color: transparent;
+            }
+        }
+    }
+
+    #tabcontent {
+        position: relative;
+        height: 100%;
+        width: 100%;
+    
+        &>div {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            &.active {
+                display: block;
+            }
+
+            padding: 2rem;
+
+            ul {
+                list-style: none;
+                
+                li {
+                    padding: 0.5rem;
+                }
+                li:hover {
+                    background-color: #333333;
+                }
+            }
+        }
+    }
+
+}

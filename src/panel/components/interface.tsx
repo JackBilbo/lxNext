@@ -17,8 +17,9 @@ interface gridstring {
   y: number
 }
 
-export var Datafieldeditor = new Datafieldcontentpanel();
 export var Navmap: Mapcontainer|null = null;
+
+export const Datafieldeditor = FSComponent.createRef<Datafieldcontentpanel>();
 
 export const defaultgrid: gridstring[] = [
     {content: '<div class="lxnwidget" data-type="toolbar"></div>', w: 1, h: 2, x:0, y:0},
@@ -54,22 +55,11 @@ export class Toolbar extends DisplayComponent<ToolbarProps> {
       }
     }
 
-    private toggleMap(): void {
-      document.querySelector('.mapcontainer')?.classList.toggle('active');
-      if(document.querySelector('.mapcontainer')?.classList.contains('active')) {
-        Navmap?.checker();
-        Navmap!.isvisible = true;
-      } else {
-        Navmap!.isvisible = false;
-      }
-    }
-
-
     public render(): VNode  {
         return (
             <div class="toolbar">
                 <button id="interact">Edit</button>
-                <button id="nav" disabled>Nav</button>
+                <button id="nav">Nav</button>
                 <button id="config" disabled>Cfg.</button>
                 <button id="mapswitch">Map</button>
                 <div id="widgetmenu">
@@ -99,13 +89,13 @@ export class Toolbar extends DisplayComponent<ToolbarProps> {
     public onAfterRender(node: VNode): void {
         super.onAfterRender(node);
 
-        Datafieldeditor.init(this.props.grid, this.eventBus);
-
+        FSComponent.render(<Datafieldcontentpanel ref={Datafieldeditor} grid={this.props.grid} eventBus={this.eventBus} />, document.getElementById('CustomPanel')!);
+                
         document.getElementById('interact')?.addEventListener('click', () => this.interact());
         document.getElementById('add')?.addEventListener('click', () => document.getElementById('widgetmenu')?.classList.toggle('active'));
-        document.getElementById('nav')?.addEventListener('click', () => console.log("navpanel"));
+        document.getElementById('nav')?.addEventListener('click', () =>document.getElementById('navpanel')?.classList.toggle('active'));
         document.getElementById('config')?.addEventListener('click', () => console.log("configpanel"));
-        document.getElementById('mapswitch')?.addEventListener('click', () => this.toggleMap());
+        document.getElementById('mapswitch')?.addEventListener('click', () => toggleMap());
 
         document.getElementById('adddatafield')?.addEventListener('click', () => addLxnWidget('datafield','alt_agl', this.props.grid, this.eventBus));
         document.getElementById('windindicator')?.addEventListener('click', () => addLxnWidget('windindicator', null, this.props.grid, this.eventBus));
@@ -138,17 +128,29 @@ export function addLxnWidget(type: string, variable: string | null, grid: GridSt
   
       const newWidget = grid.addWidget(`<div><div class="grid-stack-item-content"><div class="lxnwidget" data-type="${type}" data-variable="${variable}" style="background-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255);"></div></div></div>`, {w: 2, h: 3, x:6, y:6, id: "widget-"+variable});
       lxnWidget(type, variable, newWidget.querySelector(".lxnwidget")!, grid, eventBus);  
+      newWidget.style.setProperty('--rootsize', newWidget.clientHeight + 'px');
+      newWidget.style.setProperty('--rootwidth', newWidget.clientWidth + 'px');
+      newWidget.style.setProperty('--rootheight', newWidget.clientHeight + 'px');
       
       if(type == "datafield") {
-        Datafieldeditor.editDatafield(newWidget.querySelector(".lxnwidget")!);
+        Datafieldeditor.instance.editDatafield(newWidget.querySelector(".lxnwidget")!);
       }
     }
 }
 
 
 export function resizeWidget(widget: HTMLElement, grid: GridStack): void {
-  console.log(widget);
   if(widget.querySelector(".mapcontainer")?.classList.contains('active')) {
     Navmap?.checker();
   }
 }
+
+export function toggleMap(): void {
+    document.querySelector('.mapcontainer')?.classList.toggle('active');
+    if(document.querySelector('.mapcontainer')?.classList.contains('active')) {
+      Navmap?.checker();
+      Navmap!.isvisible = true;
+    } else {
+      Navmap!.isvisible = false;
+    }
+} 

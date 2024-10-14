@@ -17,6 +17,10 @@
         font-size: 1.5rem;
         padding: 0.3rem 0.5rem;
         margin-bottom: 1rem;
+
+        &#variable {
+            color: #666;
+        }
     }
 
     hr {
@@ -46,5 +50,44 @@
     div:hover {
         background-color: #555;
     } 
+}
+
+#varselector {
+    display: none;
+    position: absolute;
+    top: 7rem;
+    left: -5rem;
+    right: 5rem;
+    width:calc(100% + 10rem);
+    background-color: #222;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    &>div {
+        width: 33.333%;
+        padding: 1rem;
+
+        h5 { margin-bottom: 0.5rem;
+            color: #aaa;
+        }
+
+        ul {
+            list-style: none;
+
+            li {
+                padding: 0.5rem;
+                font-size: 0.8em;
+                background-color: #333;
+                border: 1px solid transparent;
+                margin-bottom: 1px;
+
+                &:hover {
+                    border: 1px solid #555;
+                }
+            }
+        }
+    }
 }
 
