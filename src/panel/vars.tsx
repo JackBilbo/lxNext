@@ -38,6 +38,7 @@ export const Units: UnitVariables = {
   'angle':  [{simunit: 'degrees', label: 'deg'}, {simunit: 'degrees', label: 'deg'}, {simunit: 'degrees', label: 'deg'}],
   'positionlat':  [{simunit: 'degrees latitude', label: 'deg'}, {simunit: 'degrees', label: 'deg'}, {simunit: 'degrees', label: 'deg'}],
   'positionlong':  [{simunit: 'degrees longitude', label: 'deg'}, {simunit: 'degrees', label: 'deg'}, {simunit: 'degrees', label: 'deg'}],
+  'weight':  [{simunit: 'lbs', label: 'lbs'}, {simunit: 'lbs', label: 'lbs'}, {simunit: 'kb', label: 'kg'}],
 }
 
 export const vars: Variable[] = [
@@ -48,6 +49,7 @@ export const vars: Variable[] = [
   { name: 'totalenergy', unittype: 'verticalspeed', simvar: 'L:LXN_TE', shortlabel: 'TE', label: 'Totel Energy', precision: 1, value: 0, family: 'ac' },  
   { name: 'heading', unittype: 'angle', simvar: 'PLANE HEADING DEGREES TRUE', shortlabel: 'HDG', label: 'Aircraft Heading', precision: 0, value: 0, family: 'ac' },
   { name: 'groundtrack', unittype: 'angle', simvar: 'GPS GROUND TRUE TRACK', shortlabel: 'TRK', label: 'Ground Track', precision: 0, value: 0, family: 'ac' },
+  { name: 'stf', unittype: 'speed', simvar: 'L:LXN_STF', shortlabel: 'STF', label: 'Speed to Fly', precision: 0, value: 0, family: 'ac' },
   { name: 'planelat', unittype: 'positionlat', simvar: 'A:PLANE LATITUDE', shortlabel: 'LAT', label: 'Aircraft Latitude', precision: 0, value: 53, family: 'none' },
   { name: 'planelong', unittype: 'positionlong', simvar: 'A:PLANE LONGITUDE', shortlabel: 'LONG', label: 'Aircraft Longitude', precision: 0, value: 10, family: 'none' },
   { name: 'winddirection', unittype: 'angle', simvar: 'A:AMBIENT WIND DIRECTION', shortlabel: 'WIND', label: 'Wind Direction', precision: 0, value: 0, family: 'wind' },
@@ -88,3 +90,244 @@ export interface FSEvents {
     totalenergy: number;
     wp_dist: number;
   }
+
+  export const aircraft = [
+    {
+        name: "Gotfriends Discus 2C FES",
+        atc_model: "$$:Discus-2c FES",
+        minimum_sink: {
+            speed_kts: 43,
+            sink_kts: -1.17
+        },
+        best_glide: {
+            speed_kts: 59,
+            sink_kts: -1.29
+        },
+        fast: {
+            speed_kts: 92,
+            sink_kts: -4.04
+        },
+        reference_weight_lbs: 921
+    },
+    {
+        name: "Gotfriends Discus 2C",
+        atc_model: "$$:Discus-2c",
+        minimum_sink: {
+            speed_kts: 43,
+            sink_kts: -1.17
+        },
+        best_glide: {
+            speed_kts: 59,
+            sink_kts: -1.29
+        },
+        fast: {
+            speed_kts: 92,
+            sink_kts: -4.04
+        },
+        reference_weight_lbs: 765
+    },
+    {
+        name: "Touchingcloud DG808S",
+        atc_model: "808S",
+        minimum_sink: {
+            speed_kts: 48,
+            sink_kts: -0.83585
+        },
+        best_glide: {
+            speed_kts: 57,
+            sink_kts: -0.9136
+        },
+        fast: {
+            speed_kts: 92,
+            sink_kts: -1.94384
+        },
+        reference_weight_lbs: 773
+    },
+    {
+        name: "Asobo LS 8",
+        atc_model: "LS8_18",
+        minimum_sink: {
+            speed_kts: 40.5,
+            sink_kts: -0.97192
+        },
+        best_glide: {
+            speed_kts: 50.21,
+            sink_kts: -0.9816392
+        },
+        fast: {
+            speed_kts: 108,
+            sink_kts: -5.928712
+        },
+        reference_weight_lbs: 770
+    },
+    {
+        name: "Asobo DG1001E Neo",
+        atc_model: "DG 1001 e Neo",
+        minimum_sink: {
+            speed_kts: 55.615571,
+            sink_kts: -1.2440576
+        },
+        best_glide: {
+            speed_kts: 63.714,
+            sink_kts: -1.3412495
+        },
+        fast: {
+            speed_kts: 108,
+            sink_kts: -4.8790384
+        },
+        reference_weight_lbs: 1501
+    },
+    {
+        name: "Madolo/B21 AS33",
+        atc_model: "AS-33me",
+        minimum_sink: {
+            speed_kts: 49,
+            sink_kts: -0.9136048
+        },
+        best_glide: {
+            speed_kts: 59,
+            sink_kts: -1.0885504
+        },
+        fast: {
+            speed_kts: 113,
+            sink_kts: -4.082064
+        },
+        reference_weight_lbs: 843
+    },
+    {
+        name: "GlideSimmer K7",
+        atc_model: "K7",
+        minimum_sink: {
+            speed_kts: 34.02,
+            sink_kts: -1.5462
+        },
+        best_glide: {
+            speed_kts: 48.59611,
+            sink_kts: -1.869
+        },
+        fast: {
+            speed_kts: 81,
+            sink_kts: -6.23
+        },
+        reference_weight_lbs: 818
+    },
+    {
+        name: "Madolo/B21 LS4",
+        atc_model: "LS4",
+        minimum_sink: {
+            speed_kts: 43.2,
+            sink_kts: -1.222
+        },
+        best_glide: {
+            speed_kts: 54,
+            sink_kts: -1.349
+        },
+        fast: {
+            speed_kts: 108,
+            sink_kts: -5.9676
+        },
+        reference_weight_lbs: 782
+    },
+    {
+        name: "ASW 28 LeNinjaHD/KiloDelta",
+        atc_model: "ASW-28",
+        minimum_sink: {
+            speed_kts: 40.49,
+            sink_kts: -1.1
+        },
+        best_glide: {
+            speed_kts: 52.37,
+            sink_kts: -1.247
+        },
+        fast: {
+            speed_kts: 108,
+            sink_kts: -5.734
+        },
+        reference_weight_lbs: 716
+    },
+    {
+        name: "JS3 18m",
+        atc_model: "JS3-18",
+        minimum_sink: {
+            speed_kts: 43.2,
+            sink_kts: -0.8942
+        },
+        best_glide: {
+            speed_kts: 54,
+            sink_kts: -0.9913
+        },
+        fast: {
+            speed_kts: 113.4,
+            sink_kts: -4.2764
+        },
+        reference_weight_lbs: 835
+    },
+    {
+        name: "JS3 15m",
+        atc_model: "JS3-15",
+        minimum_sink: {
+            speed_kts: 43.2,
+            sink_kts: -1.03
+        },
+        best_glide: {
+            speed_kts: 54,
+            sink_kts: -1.1468
+        },
+        fast: {
+            speed_kts: 113.4,
+            sink_kts: -4.49
+        },
+        reference_weight_lbs: 824
+    },
+    {
+        name: "Schweizer SGS 2-33A (Alpha)",
+        atc_model: "SGS-233A",
+        minimum_sink: {
+            speed_kts: 33.02,
+            sink_kts: -1.618
+        },
+        best_glide: {
+            speed_kts: 39.1,
+            sink_kts: -1.677
+        },
+        fast: {
+            speed_kts: 73.8,
+            sink_kts: -7.4
+        },
+        reference_weight_lbs: 782
+    },
+    {
+        name: "Yanosik SZD 30 Pirat",
+        atc_model: "PIRAT",
+        minimum_sink: {
+            speed_kts: 40.5,
+            sink_kts: -1.36
+        },
+        best_glide: {
+            speed_kts: 44.81,
+            sink_kts: -1.438 
+        },
+        fast: {
+            speed_kts: 81,
+            sink_kts: -4.781
+        },
+        reference_weight_lbs: 750
+    },
+    {
+        name: "F7 Simulations ASK 21",
+        atc_model: "K21",
+        minimum_sink: {
+            speed_kts: 44,
+            sink_kts: -1.43
+        },
+        best_glide: {
+            speed_kts: 48,
+            sink_kts: -1.454 
+        },
+        fast: {
+            speed_kts: 80,
+            sink_kts: -3.59
+        },
+        reference_weight_lbs: 1186
+    }
+]

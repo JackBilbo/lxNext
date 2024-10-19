@@ -205,6 +205,10 @@ class Task extends DisplayComponent<TaskProps> {
         return this.waypoints.get()[this.current_waypoint_index.get()];
     }
 
+    public get_wp(i:number) {
+        return this.waypoints.get()[i];
+    }
+
     update() {
         
     }
@@ -319,11 +323,9 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
         this.waypointlegline.setLatLngs([[this.planeLat, this.planeLong],[this.waypoint.lat, this.waypoint.lon]]);
 
         if(this.isCurrentwaypoint()) {
-            SimVar.SetSimVarValue("L:LXN_WP_NAME", "string", this.name.get());
             SimVar.SetSimVarValue("L:LXN_WP_DIST", "km", this.distance.get());
             SimVar.SetSimVarValue("L:LXN_WP_HEADING", "deg", this.bearing.get());
 
-            
             this.waypointclass.set("waypoint wp_current");
         } else {
             this.waypointclass.set("waypoint");
@@ -339,6 +341,7 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
         super.destroy();
         this.index = -1;
         this.waypointmapmarker.remove();
+        this.waypointlegline.remove();
         this.htmlref.instance.remove();
         console.log("waypoint destroying");
     }

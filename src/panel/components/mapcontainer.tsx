@@ -90,11 +90,11 @@ export class Mapcontainer {
                 this.climbtrail = new Trail(this.map, [lat, long], color, {strokeWidth: 8});
                 this.numlines++;
                 if(this.numlines > 20) {
-                    document.querySelector(".flight-trail:nth-child(3)")?.remove();
+                    document.querySelector(".climb-trail")?.remove();
                     this.numlines--;
                 }
             } else if(lat != this.lastupdate.lat || long != this.lastupdate.long && this.lastupdate.lat != 0 && this.lastupdate.long != 0) {
-                this.climbtrail.add(lat, long);
+                this.climbtrail.add(lat, long, "climb-trail");
             }
         } else {
             this.climbtrail = null;
@@ -147,8 +147,9 @@ export class Trail {
       this.line = undefined;
     }
 
-    add(lat: number, long: number) {
+    add(lat: number, long: number, trailtype:string = 'flight-trail') {
       if (!lat && !long) return;
+      
   
       const { coords } = this;
       const pair = [lat, long];
@@ -161,7 +162,7 @@ export class Trail {
   
       if (l === 2) {
         this.line = L.polyline([...coords], {
-          className: `flight-trail`,
+          className: trailtype,
           color: this.color,
           ...this.opts,
         });

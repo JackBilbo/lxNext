@@ -13,7 +13,7 @@ import { defaultgrid, resizeWidget } from './components/interface';
 
 import { localStorageGet, localStorageSet } from './components/localstorage';
 import { lxnWidget } from './components/interface';
-import { updateCustomVars} from './components/customvars';
+import { updateCustomVars, initAircraft } from './components/customvars';
 
 import { Datafieldeditor } from './components/interface';
 import { Navmap } from './components/interface';
@@ -87,6 +87,8 @@ class lxnext  {
 
             FSComponent.render(<Navpanel eventBus={this.eventBus} ref={this.Navpanelref} />, this.root);
             this.keybinds.listen();
+
+            initAircraft();
         })
       }
 

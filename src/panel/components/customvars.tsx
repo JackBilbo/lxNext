@@ -1,4 +1,4 @@
-
+import { aircraft, staticvars } from "../vars";
 
 const V: any = {
     te : { v: 0, h: 0, t: 0, te: 0}
@@ -6,6 +6,7 @@ const V: any = {
 
 export function updateCustomVars() {
     calcTotalEnergy();
+    update_stf();
 }
 
 function calcTotalEnergy() {
@@ -26,3 +27,90 @@ function calcTotalEnergy() {
 
     SimVar.SetSimVarValue("L:LXN_TE", "m/s", V.te.te);
 }
+
+export var current_aircraft: any = {};
+export function initAircraft() {
+    const atc_model = SimVar.GetSimVarValue("ATC MODEL", "string");
+
+    aircraft.forEach((ac) => {
+        if (ac.atc_model == atc_model) {
+            current_aircraft = ac;
+            console.log("Aircraft found: ", ac.name);
+        }
+    });
+
+    calc_polar();
+}
+
+function calc_polar() {
+
+    let c4 = current_aircraft.minimum_sink.speed_kts;
+    let d4 = current_aircraft.minimum_sink.sink_kts;
+
+    // Speed and sink in knots at best glide
+    let c5 = current_aircraft.best_glide.speed_kts;
+    let d5 = current_aircraft.best_glide.sink_kts;
+
+    // Speed and sink in knots at "fast speed" - around 92kts/170kmh
+    let c6 = current_aircraft.fast.speed_kts;
+    let d6 = current_aircraft.fast.sink_kts;
+
+    let atop = (c6-c5) * (d4-d5) + (c5-c4) * (d6-d5);
+    let abottom = c4 * c4 * (c6 -c5) + c6 * c6 * (c5-c4) + c5 * c5 * (c4-c6);
+    current_aircraft.a = atop/abottom;
+
+    let btop = d6 - d5 - current_aircraft.a * (c6 * c6 - c5 * c5);
+    let bbottom = c6 - c5;
+
+    current_aircraft.b = btop/bbottom;
+
+    current_aircraft.c = d5 - current_aircraft.a * c5 * c5 - current_aircraft.b * c5;
+}
+
+function update_stf() {
+    let bugs = 100;
+    let totalweight: number = SimVar.GetSimVarValue("A:TOTAL WEIGHT", "lbs");
+    
+    let wf = Math.sqrt(totalweight / current_aircraft.reference_weight_lbs );
+
+    let aa = current_aircraft.a / wf * 100 / bugs;
+    let bb = current_aircraft.b * 100 / bugs;
+    let cc = current_aircraft.c * wf * 100 / bugs;
+    
+    let mccready = SimVar.GetSimVarValue("VARIOMETER MAC CREADY SETTING", "knots");
+   
+    let stf = Math.sqrt((cc - mccready) / aa);
+    let sink_stf = (aa * stf * stf) + (bb * stf) + cc
+
+    SimVar.SetSimVarValue("L:LXN_SINK_STF", "knots", sink_stf);
+    SimVar.SetSimVarValue("L:LXN_STF", "knots", stf);
+}
+
+
+
+
+export function calculateArrivalheight(distance: number, indicatedAirspeed: number, heading: number, windSpeed: number, windDirection: number, sinkRate: number, startaltitude: number) {
+    const timeToFly = calculateTimeToFly(distance, indicatedAirspeed, heading, windSpeed, windDirection);
+  
+    return startaltitude - (timeToFly * sinkRate);
+  }
+
+function calculateTimeToFly(distance: number, indicatedAirspeed: number, heading: number, windSpeed: number, windDirection: number) {
+    const groundSpeed = calculateGroundSpeed(indicatedAirspeed, windSpeed, windDirection, heading);
+    const timeToFly = distance / groundSpeed;
+  
+    return timeToFly;
+  }
+  
+  // Helper function to calculate the ground speed
+  function calculateGroundSpeed(indicatedAirspeed: number, windSpeed: number, windDirection: number, heading: number) {
+    const windDirectionRad = windDirection * Math.PI / 180;
+    const headingRad = heading * Math.PI / 180;
+  
+    const windComponent = windSpeed * Math.cos(windDirectionRad - headingRad);
+    const trueAirspeed = indicatedAirspeed - windComponent;
+  
+    const groundSpeed = trueAirspeed * Math.cos(headingRad);
+  
+    return groundSpeed;
+  }

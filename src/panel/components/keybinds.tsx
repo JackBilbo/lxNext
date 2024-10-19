@@ -11,7 +11,7 @@ export class Keybinds {
     async listen() {
         const bus = new EventBus();
         
-        const manager = await KeyEventManager.getManager(bus);
+        const manager = await KeyEventManager.getManager(this.eventBus);
         console.log("Keybinders listening");
         manager.interceptKey('PLUS', true);
         manager.interceptKey('MINUS', true);
