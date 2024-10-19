@@ -6,6 +6,13 @@ export function setSimUnits(unit: number) {
   simUnits = unit;
 }
 
+export const earthradius: {[key: string]: number} = {
+  'km': 6371,
+  'nmiles': 6371 / 1.852,
+  'ft': 6371 * 3.28084,
+  'm': 6371 * 1000
+}
+
 export interface Variable {
   name: string;
   unittype: string;
@@ -22,6 +29,7 @@ interface UnitVariables {
 }
 
 export const Units: UnitVariables = {
+  'distance': [{simunit: 'nmiles', label: 'NM'}, {simunit: 'km', label: 'km'}, {simunit: 'km', label: 'km'}],
   'speed': [{simunit: 'knots', label: 'kts'}, {simunit: 'kph', label: 'km/h'}, {simunit: 'kph', label: 'km/h'}],
   'altitude': [{simunit: 'ft', label: 'ft'}, {simunit: 'ft', label: 'ft'}, {simunit: 'm', label: 'm'}],
   'verticalspeed': [{simunit: 'knots', label: 'kts'}, {simunit: 'feet/second', label: 'ft/s'}, {simunit: 'm/s', label: 'm/s'}],
@@ -44,10 +52,14 @@ export const vars: Variable[] = [
   { name: 'planelong', unittype: 'positionlong', simvar: 'A:PLANE LONGITUDE', shortlabel: 'LONG', label: 'Aircraft Longitude', precision: 0, value: 10, family: 'none' },
   { name: 'winddirection', unittype: 'angle', simvar: 'A:AMBIENT WIND DIRECTION', shortlabel: 'WIND', label: 'Wind Direction', precision: 0, value: 0, family: 'wind' },
   { name: 'windspeed', unittype: 'windspeed', simvar: 'A:AMBIENT WIND VELOCITY', shortlabel: 'WINDSPEED', label: 'Wind Speed', precision: 1, value: 0, family: 'wind' },
-  { name: 'verticalwind', unittype: 'verticalspeed', simvar: 'A:AMBIENT WIND Y', shortlabel: 'V. WIND', label: 'Vertical Wind Speed', precision: 0, value: 0, family: 'wind' },
+  { name: 'verticalwind', unittype: 'verticalspeed', simvar: 'A:AMBIENT WIND Y', shortlabel: 'V. WIND', label: 'Vertical Wind Speed', precision: 1, value: 0, family: 'wind' },
   { name: 'simtime', unittype: 'time', simvar: 'E:SIMULATION TIME', shortlabel: 'SIMTIME', label: 'Simulation Time', precision: 0, value: 0, family: 'timer' },
-  { name: 'simtime', unittype: 'time', simvar: 'E:LOCAL TIME', shortlabel: 'LOCAL', label: 'Local Time', precision: 0, value: 0, family: 'timer' }
+  { name: 'localtime', unittype: 'time', simvar: 'E:LOCAL TIME', shortlabel: 'LOCAL', label: 'Local Time', precision: 0, value: 0, family: 'timer' },
+  { name: 'wp_dist', unittype: 'distance', simvar: 'L:LXN_WP_DIST', shortlabel: 'WP DIST', label: 'Current Waypoint Distance', precision: 0, value: 0, family: 'waypoint' },
+  { name: 'wp_heading', unittype: 'angle', simvar: 'L:LXN_WP_HEADING', shortlabel: 'WP HDG', label: 'Current Waypoint Heading', precision: 0, value: 0, family: 'waypoint' },
 ]
+
+export const staticvars:{[key: string]: number|string} = {}
 
 export const varfamilies = [
   { name: 'ac', label: 'Aircraft'},
@@ -74,4 +86,5 @@ export interface FSEvents {
     planelong: number;
     altitude: number;
     totalenergy: number;
+    wp_dist: number;
   }

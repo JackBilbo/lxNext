@@ -61,17 +61,85 @@
 
             padding: 2rem;
 
-            ul {
-                list-style: none;
+        }
+
+        .airportlist {
+            &.active {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .ap_entry {
+                background-color: #222222;
+                margin-bottom: 0.5rem;
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 0.25rem;
+                border: 2px solid transparent;
+                font-size: 1.2rem;
+                &:hover {
+                    border: 2px solid #888888;
+                }
+
+                &.selected {
+                    border: 2px solid #ffcc00;
+                }
                 
-                li {
-                    padding: 0.5rem;
+                &>div {
+                    padding: 0.3rem;
                 }
-                li:hover {
-                    background-color: #333333;
+
+                .ap_icao { width: 10%; }
+                .ap_name { width: 70%; }
+                .ap_bearing { width: 10%; text-align: right;
+                    span { display: inline-block; }
                 }
+                .ap_distance { width: 10%; text-align: right;}
             }
         }
+    }
+
+    .taskheader {
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #666;
+        color: #888;
+
+        h2 {
+            font-size: 1.2rem;
+        }
+    }
+
+    .waypoint {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        background-color: #222222;
+        border: 2px solid transparent;
+
+        &.wp_current {
+            border: 2px solid #ffcc00;
+        }
+
+        &>div { padding: 1rem;}
+
+        .wp_name {
+            width: 100%;
+            font-size: 1rem;
+            border-bottom: 1px solid #666;
+        }
+
+        .wp_minmax {
+            width: 60%;
+        }
+        .wp_bearing { width: 20%; text-align: right;
+            span { 
+                display: inline-block; 
+                transform-origin: 50% 50%;
+            }
+        }
+        .wp_distance { width: 20%; text-align: right;}
+
     }
 
 }

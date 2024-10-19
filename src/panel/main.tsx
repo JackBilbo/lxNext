@@ -5,7 +5,7 @@ import './styles.scss';
 
 import { FSComponent, Subject, EventBus } from '@microsoft/msfs-sdk';
 import { Datafield } from './components/Datafield';
-import { Units, vars, FSEvents, setSimUnits, simUnits } from './vars';
+import { Units, vars, staticvars, FSEvents, setSimUnits, simUnits } from './vars';
 
 
 import { GridStack } from 'gridstack';
@@ -85,7 +85,7 @@ class lxnext  {
 
             Navmap?.checker();
 
-            FSComponent.render(<Navpanel bus={this.eventBus} ref={this.Navpanelref} />, this.root);
+            FSComponent.render(<Navpanel eventBus={this.eventBus} ref={this.Navpanelref} />, this.root);
             this.keybinds.listen();
         })
       }
@@ -96,10 +96,10 @@ class lxnext  {
         vars.map(v => {
             let val = SimVar.GetSimVarValue(v.simvar, Units[v.unittype][simUnits].simunit);
             this.eventBus.getPublisher<FSEvents>().pub(v.name as keyof FSEvents, val);
-            v.value = val;
+            staticvars[v.name] = val;
         })  
 
-        if(Navmap && Navmap.isvisible) { 
+        if(Navmap) { 
             Navmap?.update();
         }
 

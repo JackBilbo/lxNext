@@ -1,5 +1,5 @@
 import { DisplayComponent, EventBus, FSComponent, VNode, Subscribable, ConsumerSubject, Subject } from '@microsoft/msfs-sdk';
-import { FSEvents, Units, simUnits, vars } from '../vars';
+import { FSEvents, Units, simUnits, staticvars } from '../vars';
 
 
 interface WindindicatorProps {
@@ -16,6 +16,7 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
     private windrosestyle = Subject.create<string>('');
     private arrowstyle = Subject.create<string>('');
     private textfieldstyle = Subject.create<string>('');
+    private courselinestyle = Subject.create<string>('');
 
     private unit = Subject.create<string>(Units["windspeed"][simUnits].label);
 
@@ -29,6 +30,7 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
 
         const rosestyle = subscriber.on('heading').withPrecision(0).whenChanged().handle((hdg) => {
             this.windrosestyle.set(`transform: rotate(${-1 * hdg}deg);`);
+            this.courselinestyle.set(`transform: rotate(${staticvars.wp_heading}deg);`);
         });
 
         const arrowstyle = subscriber.on('winddirection').withPrecision(0).whenChanged().handle((wd) => {
@@ -58,6 +60,7 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
             <div ref={this.elementRef} class="windindicator">
                 <div class="heading">{this.heading}</div>
                 <div class="windrose" style={this.windrosestyle}>
+                    <div class="courseline" style={this.courselinestyle}></div>
                     <div class="arrow" style={this.arrowstyle}><svg id="windtriangle" viewBox="0 0 100 100"><polygon points="50 100, 100 15, 0 15"/></svg>
                         <div class="direction" style={this.textfieldstyle}>{this.winddirection}&deg;</div>
                         <div class="velocity" style={this.textfieldstyle}>{this.windspeed}<span>{this.unit}</span></div>
@@ -73,13 +76,12 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
         const target = this.elementRef.instance.querySelector(".windrose") as HTMLDivElement;
         const arrow = this.elementRef.instance.querySelector(".windrose .arrow") as HTMLDivElement;
         const dirfield = this.elementRef.instance.querySelector(".direction") as HTMLDivElement;
-        const speedfield = this.elementRef.instance.querySelector(".velocity") as HTMLDivElement;
-
-        
+        const speedfield = this.elementRef.instance.querySelector(".velocity") as HTMLDivElement;      
 
         this.winddirection.sub(winddir => {
             dirfield.style.transform = `rotate(-${winddir - this.heading.get() +180}deg)`;
             speedfield.style.transform = `rotate(-${winddir - this.heading.get() +180}deg)`;
+            
         })
     }
 

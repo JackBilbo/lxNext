@@ -1,17 +1,20 @@
-import { FSComponent, DisplayComponent, NodeReference, VNode, ComponentProps, Subscribable, Consumer, Subject, EventBus, FacilityLoader, FacilityRepository, AirportFacility, FacilitySearchType, FacilityType, GeoPoint } from '@microsoft/msfs-sdk';
-import { simUnits, vars } from '../vars';
+import { FSComponent, DisplayComponent, NodeReference, VNode, ComponentProps, Subscribable, ConsumerSubject, Subject, EventBus, FacilityLoader, FacilityRepository, AirportFacility, FacilitySearchType, FacilityType, GeoPoint } from '@microsoft/msfs-sdk';
+import { FSEvents, simUnits, Units, staticvars, earthradius } from '../vars';
 import { checkSimVarLoaded } from './utils';
+import { Navmap } from './interface';
+import L from "leaflet";
 
 interface NavPanelProps extends ComponentProps {
-    bus: EventBus;
+    eventBus: EventBus; 
 }
 
 interface TaskProps extends ComponentProps {
-    
+    eventBus: EventBus;
 }
 
 interface AirportentryProps extends ComponentProps {
     airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number};
+    task: Task;
 }
 
 export const ownPosition:GeoPoint = new GeoPoint(0, 0);
@@ -19,7 +22,7 @@ export const ownPosition:GeoPoint = new GeoPoint(0, 0);
 
 
 export class Navpanel extends DisplayComponent<NavPanelProps> { 
-    private eventBus: EventBus = this.props.bus;
+    private eventBus: EventBus = this.props.eventBus;
     private facLoader: any;
 
     private tabsref = FSComponent.createRef<HTMLDivElement>();
@@ -27,8 +30,7 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
     private airportbuttonref = FSComponent.createRef<HTMLButtonElement>();
     private taskpanelref = FSComponent.createRef<HTMLDivElement>();
     private airportpanelref = FSComponent.createRef<HTMLDivElement>();
-    private airportlistref = FSComponent.createRef<HTMLUListElement>();
-    private lastAirportlist = new Map<string, AirportFacility>();
+    private airportrefs: {[key: string]: NodeReference<Airportentry>} = {};
     private taskref = FSComponent.createRef<Task>();
 
     constructor(props: NavPanelProps) {
@@ -48,10 +50,9 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
                 </div>
                 <div id="tabcontent">
                     <div ref={this.taskpanelref} class="active">
-                        <Task ref={this.taskref} />
+                        <Task eventBus={this.eventBus} ref={this.taskref} />
                     </div>
-                    <div ref={this.airportpanelref}>
-                        <ul ref={this.airportlistref}></ul>
+                    <div ref={this.airportpanelref} class="airportlist">
                     </div>
                 </div>      
             </div>
@@ -61,6 +62,8 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
 
     onAfterRender(node: VNode): void {
         super.onAfterRender(node);
+        
+
         this.taskbuttonref.instance.addEventListener('click', () => {
             this.taskbuttonref.instance.classList.add('active');
             this.airportbuttonref.instance.classList.remove('active');
@@ -76,16 +79,14 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
         });
 
         ownPosition.set(SimVar.GetSimVarValue("A:PLANE LATITUDE", "degree latitude"), SimVar.GetSimVarValue("A:PLANE LONGITUDE", "degree longitude"));
-        let tempwp = new Waypoint(ownPosition.lat, ownPosition.lon, SimVar.GetSimVarValue("INDICATED ALTITUDE", "m"), "Home");
+        let tempwp = new Waypoint(ownPosition.lat, ownPosition.lon, SimVar.GetSimVarValue("INDICATED ALTITUDE", "m"), 500, "Home");
         this.taskref.instance.create("Basic Task", [ tempwp ]);
 
         this.loadAirports(this.eventBus);
     } 
 
     public update() {
-        if(this.airportpanelref.instance.classList.contains('active')) {    
-            this.renderAirports();
-        }
+
     }
 
     async loadAirports(eventBus: EventBus) {
@@ -104,42 +105,33 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
           
             for (let i = 0; i < diff.removed.length; i++) {
               nearestAirports.delete(diff.removed[i]);
+              this.airportrefs[diff.removed[i].icao].instance.remove();
             }
           
             await Promise.all(diff.added.map(async (icao: string) => {
               const airport = await this.facLoader.getFacility(FacilityType.Airport, icao);
               nearestAirports.set(icao, airport);
+              let thisref = FSComponent.createRef<Airportentry>();
+              this.airportrefs[icao] = thisref;
+              FSComponent.render(<Airportentry ref={thisref} airport={airport} task={this.taskref.instance} />, this.airportpanelref.instance);
             }));
             
-            if(nearestAirports != this.lastAirportlist) {
-                this.lastAirportlist = nearestAirports;
-                this.renderAirports();
-            }
+            let temp = Array.from(nearestAirports.values());
+            temp.sort((a, b) => {
+                return this.getDistance(a) - this.getDistance(b);
+            });
+
+            temp.forEach((airport,index) => {
+                this.airportrefs[airport.icao].instance.update(this.getDistance(airport), ownPosition.bearingTo(airport.lat, airport.lon));
+                this.airportrefs[airport.icao].instance.setOrder(index);
+            })
         }, 1000);
     }
 
-    renderAirports() {
-        let temparray: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number}[] = [];
-
-        this.lastAirportlist.forEach((airport) => {
-            let geo = new GeoPoint(airport.lat, airport.lon);
-            let distance_m = geo.distance(ownPosition.lat, ownPosition.lon) * 6371000;
-            let bearing = geo.bearingFrom(ownPosition.lat, ownPosition.lon);
-            temparray.push({name: airport.name, icao: airport.icao, lat: airport.lat, lon: airport.lon, distance_m: distance_m, bearing: bearing});
-        });
-
-        temparray.sort((a, b) => {
-            return a.distance_m - b.distance_m;
-        });
-
-        this.airportlistref.instance.innerHTML = "";
-        temparray.forEach((airport) => {
-            FSComponent.render(<Airportentry airport={airport} />, this.airportlistref.instance);
-        })
-    }
-
-    airportclickhandler(icao: string) {
-        console.log("Airport clicked: " + icao);
+    getDistance(airport: AirportFacility) {
+        let geo = new GeoPoint(airport.lat, airport.lon);
+        let distance_m = geo.distance(ownPosition.lat, ownPosition.lon) * earthradius[Units.distance[simUnits].simunit];
+        return distance_m;
     }
 
 };
@@ -147,95 +139,230 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
 
 class Airportentry extends DisplayComponent<AirportentryProps> {
     private airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number} = this.props.airport;
-    private thisref = FSComponent.createRef<HTMLLIElement>();
+    private thisref = FSComponent.createRef<HTMLDivElement>();
+    private currentDistance = Subject.create<number>(0);
+    private currentBearing = Subject.create<string>("");
+    private currentHeading = Subject.create<number>(0);
+    private unit = Subject.create<string>(Units.distance[simUnits].label);
+    private task = this.props.task;
 
+    constructor(props: AirportentryProps) {
+        super(props);
+
+    }
     render(): VNode {
         return (
-            <li ref={this.thisref}>{this.airport.icao.replace(/A\s*/,'')} - {Utils.Translate(this.airport.name)} - {this.airport.bearing.toFixed(0)}&deg; - {(this.airport.distance_m / 1000).toFixed(0)}km</li>
-        )
-    }
-
-    onAfterRender(node: VNode): void {
-        super.onAfterRender(node);
-        this.thisref.instance.addEventListener('click', () => {
-            console.log(this.airport.icao);
-        })
-    }
-}
-
-class Task extends DisplayComponent<TaskProps> {
-    public name = Subject.create<string>("Task");
-    public status = Subject.create<string>("Prestart");
-    public waypoints = Subject.create<Waypoint[]>([]); // Waypoint[] = [];
-    public current_waypoint_index: number = 0;
-    private wpref = new Array<any>();
-
-    create(name: string, waypoints: Waypoint[]) {
-        this.name.set(name);
-        this.waypoints.set(waypoints);
-        this.current_waypoint_index = 0;
-        console.log(this.waypoints.get()[0].name);
-    }
-
-    public current_wp() {
-        return "foo";
-    }
-
-    update() {
-        
-    }
-    render() {
-        let check = new Waypoint(0,0,0,"foo");
-        return (
-            <div>
-                <h2>{this.name} - ({this.status}) - {this.waypoints.get()[0]}</h2>
-                {this.waypoints.get().map((el) => <WaypointDisplay waypoint={el} />)} 
+            <div ref={this.thisref} class="ap_entry">
+                <div class="ap_icao">{this.airport.icao.replace(/A\s*/,'')}</div>
+                <div class="ap_name">{Utils.Translate(this.airport.name)}</div>
+                <div class="ap_bearing">{this.currentHeading}&deg; <span style={this.currentBearing}>&uarr;</span></div>
+                <div class="ap_distance">{this.currentDistance} {this.unit}</div>
             </div>
         )
     }
 
     onAfterRender(node: VNode): void {
         super.onAfterRender(node);
-        let arr = this.waypoints.sub((ele) => {
-            console.log(this.waypoints.map((wp) => wp));
-        },true);
+        this.thisref.instance.addEventListener('click', () => {
+            this.task.create("DTO", [ new Waypoint(this.airport.lat, this.airport.lon, 0, 500, Utils.Translate(this.airport.name)) ]);
+        })
+    }
+
+    setOrder(order: number) {
+        this.thisref.instance.style.order = order.toString();
+    }
+
+    update(distance: number, bearing: number) {
+        this.unit.set(Units.distance[simUnits].label);  
+        this.currentDistance.set(Math.round(distance));
+        this.currentHeading.set(Math.round(bearing));
+        this.currentBearing.set("transform: rotate(" + Math.round(bearing - (staticvars.heading as number)) + "deg)");
+    }
+
+    remove() {
+        this.thisref.instance.remove();
+    }
+}
+
+class Task extends DisplayComponent<TaskProps> {
+    private eventBus = this.props.eventBus;
+    public name = Subject.create<string>("Task");
+    public status = Subject.create<string>("Prestart");
+    public waypoints = Subject.create<Waypoint[]>([]); // Waypoint[] = [];
+    public current_waypoint_index = Subject.create<number>(0);
+    private waypointentries: NodeReference<WaypointDisplay>[] = [];
+    public waypointlistref = FSComponent.createRef<HTMLDivElement>();
+
+    create(name: string, waypoints: Waypoint[]) {
+        this.waypointentries.forEach((w) => { console.log(w); w.instance.destroy(); });
+        this.name.set(name);
+        this.waypoints.set(waypoints);
+        this.current_waypoint_index.set(0);
+        
+    }
+
+    public current_wp() {
+        return this.waypoints.get()[this.current_waypoint_index.get()];
+    }
+
+    update() {
+        
+    }
+    render() {
+        return (
+            <div>
+                <div class="taskheader">
+                    <h2>{this.name} - {this.current_waypoint_index} / {this.waypoints.get().length}</h2>
+                </div>
+                
+                <div id="waypointlist" ref={this.waypointlistref}></div>
+            </div>
+        )
+    }
+
+    onAfterRender(node: VNode): void {
+        super.onAfterRender(node);
+        this.waypointlistref.instance.innerHTML = ""; //
+
+        console.log(this.waypoints.get());
+        this.waypoints.sub((ele) => {
+            // this.waypointlistref.instance.innerHTML = "";
+            ele.forEach((wp,i) => {       
+                const wpref = FSComponent.createRef<WaypointDisplay>();
+                FSComponent.render(<WaypointDisplay ref={wpref} task={this} waypoint={wp} eventBus={this.eventBus} index={i} />, this.waypointlistref.instance);
+                this.waypointentries.push(wpref);
+            })
+        })
+
     }
 } 
 
 interface WaypointDisplayProps extends ComponentProps {
+    task: Task;
     waypoint: Waypoint;
+    eventBus: EventBus;
+    index: number;
 }
 
 class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
+    private task = this.props.task;
+    private eventBus = this.props.eventBus;
     private waypoint: Waypoint = this.props.waypoint;
+    private waypointclass = Subject.create<string>("waypoint");
     private name = Subject.create<string>(this.waypoint.name);
     private distance = Subject.create<number>(0);
+    private bearing = Subject.create<number>(0);
+    private currentBearing = Subject.create<string>("");
+    private planeLat: number = staticvars.planelat as number;
+    private planeLong: number = staticvars.planelong as number;
+    private index = this.props.index;
+    private unit = Subject.create<string>(Units.distance[simUnits].label);
+    private htmlref = FSComponent.createRef<HTMLDivElement>();
+
+    private waypointmapmarker: L.Circle;
+    private waypointlegline: L.Polyline;
+
+    constructor(props: WaypointDisplayProps) {
+        super(props);
+
+        this.waypointmapmarker = L.circle([this.waypoint.lat, this.waypoint.lon], this.waypoint.radius, {
+            color: '#C60AC6',
+            fillColor: '#C60AC6',
+            fillOpacity: 0.3
+        }).addTo(Navmap!.map);
+
+        this.waypointlegline = L.polyline([[this.planeLat, this.planeLong],[this.waypoint.lat, this.waypoint.lon]], { 
+            color: '#ffcc00',
+            weight: 3 
+        }).addTo(Navmap!.map);
+
+        const subscriber = this.eventBus.getSubscriber<FSEvents>();
+        const unittype = subscriber.on('simUnits').whenChanged().handle((mu) => {
+            this.unit.set(Units.distance[mu].label);  
+        });
+
+        const lat_consumer = subscriber.on('planelat').onlyAfter(1000).whenChanged().handle((lat) => {
+            this.planeLat = lat;
+            this.distance.set(Math.round(this.waypoint.distance(this.planeLat, this.planeLong) * earthradius[Units.distance[simUnits].simunit]));
+            this.bearing.set(Math.round(this.waypoint.bearingFrom(this.planeLat, this.planeLong)));
+            if(this.index === this.task.current_waypoint_index.get()) {
+                this.updateWaypointvars();
+            }
+        });
+
+        const long_consumer = subscriber.on('planelong').onlyAfter(1000).whenChanged().handle((long) => {
+            this.planeLong = long;
+            this.distance.set(Math.round(this.waypoint.distance(this.planeLat, this.planeLong) * earthradius[Units.distance[simUnits].simunit]));
+            this.bearing.set(Math.round(this.waypoint.bearingFrom(this.planeLat, this.planeLong)));
+        });
+
+        if(this.isCurrentwaypoint()) {
+            this.updateWaypointvars();
+        }
+        
+        
+    }
     render(): VNode {
-        this.distance.set(this.waypoint.distance(ownPosition.lat, ownPosition.lon) * 6371);
         return (
-            <div class="waypoint">Waypoint: {this.name} - {this.distance}km</div>
+            <div ref={this.htmlref} class={this.waypointclass}>
+               <div class="wp_name">{this.name} ({this.waypoint.alt})</div>
+               <div class="wp_minmax">min. {this.waypoint.min_alt} / max.{this.waypoint.max_alt}</div>
+               <div class="wp_bearing">{this.bearing}&deg; <span style={this.currentBearing}>&uarr;</span></div>
+               <div class="wp_distance">{this.distance} {this.unit}</div>
+               
+            </div>
         )
+    }
+
+    updateWaypointvars() {
+        this.currentBearing.set("transform: rotate(" + Math.round(this.bearing.get() - (staticvars.heading as number)) + "deg");
+        this.waypointlegline.setLatLngs([[this.planeLat, this.planeLong],[this.waypoint.lat, this.waypoint.lon]]);
+
+        if(this.isCurrentwaypoint()) {
+            SimVar.SetSimVarValue("L:LXN_WP_NAME", "string", this.name.get());
+            SimVar.SetSimVarValue("L:LXN_WP_DIST", "km", this.distance.get());
+            SimVar.SetSimVarValue("L:LXN_WP_HEADING", "deg", this.bearing.get());
+
+            
+            this.waypointclass.set("waypoint wp_current");
+        } else {
+            this.waypointclass.set("waypoint");
+        }
+        
+    }
+
+    isCurrentwaypoint() {
+        return this.index === this.task.current_waypoint_index.get();
+    }
+
+    destroy(): void {
+        super.destroy();
+        this.index = -1;
+        this.waypointmapmarker.remove();
+        this.htmlref.instance.remove();
+        console.log("waypoint destroying");
     }
 }
 
 interface WaypointInterface extends GeoPoint {
     name: string;
-    lat: number;
-    lon: number;
     alt: number;
+    radius: number;
     max_alt: number | null;
     min_alt: number | null; 
 }
 
 class Waypoint extends GeoPoint implements WaypointInterface {
     public alt: number;
+    public radius: number;
     public name: string;
     public max_alt: number | null;
     public min_alt: number | null;
-    constructor(lat: number, lon: number, alt?: number, name?: string) {
+    constructor(lat: number, lon: number, alt: number, radius?: number, name?: string) {
         super(lat, lon);
-        this.alt = alt ?? 0;
+        this.alt = alt;
         this.name = name ?? "Waypoint";
+        this.radius = radius ?? 500;
         this.max_alt = alt ?? null;
         this.min_alt = alt ?? null;
     }

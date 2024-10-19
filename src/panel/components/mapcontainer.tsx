@@ -1,6 +1,6 @@
 import {  EventBus } from "@microsoft/msfs-sdk";
 import { GridStack } from 'gridstack';
-import { vars } from '../vars';
+import { vars, staticvars } from '../vars';
 
 import L from "leaflet";
 
@@ -15,7 +15,7 @@ interface Mapprops {
 
 export class Mapcontainer {
     private root: HTMLElement;
-    private map: any;
+    public map: any;
     private glidericon: any;
     public isvisible: boolean = false;
 
@@ -64,16 +64,19 @@ export class Mapcontainer {
     }
 
     public update() {
-        let lat = vars.find((v) => v.name == "planelat")?.value as number;
-        let long = vars.find((v) => v.name == "planelong")?.value as number;
-        let hdg = vars.find((v) => v.name == "heading")?.value as number;
-        let grdtrk = vars.find((v) => v.name == "groundtrack")?.value as number;
-        let te = vars.find((v) => v.name == "totalenergy")?.value as number;
-        this.map.setView([lat, long]);
-        this.glidericon.setLatLng([lat, long]);
-        
-        document.getElementById("ownship")!.style.transform = "rotate(" + hdg + "deg)";
-        document.getElementById("ac_trk")!.style.transform = "rotate(" + (grdtrk - hdg) + "deg)";
+        let lat = staticvars.planelat as number; // vars.find((v) => v.name == "planelat")?.value as number;
+        let long = staticvars.planelong as number; //vars.find((v) => v.name == "planelong")?.value as number;
+        let hdg = staticvars.heading as number; //vars.find((v) => v.name == "heading")?.value as number;
+        let grdtrk = staticvars.groundtrack as number; //vars.find((v) => v.name == "groundtrack")?.value as number;
+        let te = staticvars.totalenergy as number; //vars.find((v) => v.name == "totalenergy")?.value as number;
+
+        if(this.isvisible) {
+            this.map.setView([lat, long]);
+            this.glidericon.setLatLng([lat, long]);
+            document.getElementById("ownship")!.style.transform = "rotate(" + hdg + "deg)";
+            document.getElementById("ac_trk")!.style.transform = "rotate(" + (grdtrk - hdg) + "deg)";
+        }
+             
 
         if(!this.trail) {
             this.trail = new Trail(this.map, [lat, long], "#e3b146");
@@ -87,7 +90,7 @@ export class Mapcontainer {
                 this.climbtrail = new Trail(this.map, [lat, long], color, {strokeWidth: 8});
                 this.numlines++;
                 if(this.numlines > 20) {
-                    document.querySelector(".flight-trail:nth-child(2)")?.remove();
+                    document.querySelector(".flight-trail:nth-child(3)")?.remove();
                     this.numlines--;
                 }
             } else if(lat != this.lastupdate.lat || long != this.lastupdate.long && this.lastupdate.lat != 0 && this.lastupdate.long != 0) {
