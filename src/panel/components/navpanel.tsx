@@ -1,6 +1,7 @@
-import { FSComponent, DisplayComponent, NodeReference, VNode, ComponentProps, Subscribable, ConsumerSubject, Subject, EventBus, FacilityLoader, FacilityRepository, AirportFacility, FacilitySearchType, FacilityType, GeoPoint } from '@microsoft/msfs-sdk';
+import { FSComponent, DisplayComponent, NodeReference, VNode, ComponentProps, Subscribable, ConsumerSubject, Subject, EventBus, FacilityLoader, FacilityRepository, AirportFacility, FacilitySearchType, FacilityType, GeoPoint, UnitType } from '@microsoft/msfs-sdk';
 import { FSEvents, simUnits, Units, staticvars, earthradius } from '../vars';
 import { checkSimVarLoaded } from './utils';
+import { calculateArrivalheight, calculateTimeToFly } from './customvars';
 import { Navmap } from './interface';
 import L from "leaflet";
 
@@ -256,12 +257,17 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
     private name = Subject.create<string>(this.waypoint.name);
     private distance = Subject.create<number>(0);
     private bearing = Subject.create<number>(0);
+    private arrivalheight = Subject.create<number>(0);
+    private ete = Subject.create<string>('00:00:00');
     private currentBearing = Subject.create<string>("");
     private planeLat: number = staticvars.planelat as number;
     private planeLong: number = staticvars.planelong as number;
     private index = this.props.index;
     private unit = Subject.create<string>(Units.distance[simUnits].label);
+    private altunit = Subject.create<string>(Units.altitude[simUnits].label);
     private htmlref = FSComponent.createRef<HTMLDivElement>();
+    private startaltitude: number = 0;
+    private coursetofly: number = 0;
 
     private waypointmapmarker: L.Circle;
     private waypointlegline: L.Polyline;
@@ -313,7 +319,8 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
                <div class="wp_minmax">min. {this.waypoint.min_alt} / max.{this.waypoint.max_alt}</div>
                <div class="wp_bearing">{this.bearing}&deg; <span style={this.currentBearing}>&uarr;</span></div>
                <div class="wp_distance">{this.distance} {this.unit}</div>
-               
+               <div class="wp_ete">ETE {this.ete} min</div>
+               <div class="wp_arrivalheight">Arr. {this.arrivalheight} {this.altunit}</div>
             </div>
         )
     }
@@ -325,13 +332,41 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
         if(this.isCurrentwaypoint()) {
             SimVar.SetSimVarValue("L:LXN_WP_DIST", "km", this.distance.get());
             SimVar.SetSimVarValue("L:LXN_WP_HEADING", "deg", this.bearing.get());
-
             this.waypointclass.set("waypoint wp_current");
+
+            this.startaltitude = staticvars.alt as number;
+            this.coursetofly = this.bearing.get();
         } else {
             this.waypointclass.set("waypoint");
+            this.startaltitude = this.task.get_wp(this.index - 1).alt;
+            this.coursetofly = this.task.get_wp(this.index - 1).bearingTo(this.waypoint.lat, this.waypoint.lon);
         }
         
+        /* Calculate ETE and Arrivalheight */
+        if(simUnits === 0) {
+            /* Imperial units, so convert */
+            this.arrivalheight.set(Math.round((calculateArrivalheight(this.distance.get() * 1852, this.coursetofly, this.startaltitude / 3.281)) * 3.281));
+            this.ete.set(this.formatValue(calculateTimeToFly(this.distance.get() * 1852, this.coursetofly)));
+        } else if(simUnits === 1) {
+            /* hybrid */
+            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get(), this.coursetofly, this.startaltitude / 3.281) * 3.281));
+            this.ete.set(this.formatValue(calculateTimeToFly(this.distance.get() * 1000, this.coursetofly)));
+        } else {
+            /* metric */
+            console.log(calculateArrivalheight(this.distance.get(), this.coursetofly, this.startaltitude));
+            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get(), this.coursetofly, this.startaltitude)));
+            this.ete.set(this.formatValue(calculateTimeToFly(this.distance.get() * 1000, this.coursetofly)));
+        }
+
     }
+
+    private formatValue(val: number): string {
+        let time = Math.abs(val);
+        let seconds = Math.floor(time % 60);
+        let minutes = Math.floor((time / 60) % 60);
+        let hours = Math.floor(Math.min(time / 3600, 99));
+        return hours + ":" + ("0" + minutes).substr(-2);
+      }
 
     isCurrentwaypoint() {
         return this.index === this.task.current_waypoint_index.get();

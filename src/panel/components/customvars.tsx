@@ -84,18 +84,23 @@ function update_stf() {
 
     SimVar.SetSimVarValue("L:LXN_SINK_STF", "knots", sink_stf);
     SimVar.SetSimVarValue("L:LXN_STF", "knots", stf);
+    staticvars.stf_ms = stf * 0.51444;
+    staticvars.sink_stf_ms = sink_stf * 0.51444;
 }
 
 
-
-
-export function calculateArrivalheight(distance: number, indicatedAirspeed: number, heading: number, windSpeed: number, windDirection: number, sinkRate: number, startaltitude: number) {
-    const timeToFly = calculateTimeToFly(distance, indicatedAirspeed, heading, windSpeed, windDirection);
+export function calculateArrivalheight(distance: number, heading: number, startaltitude: number) {
+    console.log(staticvars.sink_stf_ms, staticvars.stf_ms);
+    const sinkRate: number = staticvars.sink_stf_ms as number; 
+    const timeToFly = calculateTimeToFly(distance, heading);
   
-    return startaltitude - (timeToFly * sinkRate);
+    return startaltitude + (timeToFly * sinkRate);
   }
 
-function calculateTimeToFly(distance: number, indicatedAirspeed: number, heading: number, windSpeed: number, windDirection: number) {
+export function calculateTimeToFly(distance: number, heading: number) {
+    const indicatedAirspeed: number = staticvars.stf_ms as number;
+    const windDirection: number = staticvars.winddirection as number;
+    const windSpeed: number = SimVar.GetSimVarValue("A:AMBIENT WIND VELOCITY", "m/s");
     const groundSpeed = calculateGroundSpeed(indicatedAirspeed, windSpeed, windDirection, heading);
     const timeToFly = distance / groundSpeed;
   
@@ -111,6 +116,6 @@ function calculateTimeToFly(distance: number, indicatedAirspeed: number, heading
     const trueAirspeed = indicatedAirspeed - windComponent;
   
     const groundSpeed = trueAirspeed * Math.cos(headingRad);
-  
+    console.log("GS: " + groundSpeed);
     return groundSpeed;
   }
