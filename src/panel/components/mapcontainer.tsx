@@ -79,7 +79,7 @@ export class Mapcontainer {
              
 
         if(!this.trail) {
-            this.trail = new Trail(this.map, [lat, long], "#e3b146");
+            this.trail = new Trail(this.map, [lat, long], "#e3b146", {strokeWidth: 8});
         } else if(lat != this.lastupdate.lat || long != this.lastupdate.long && this.lastupdate.lat != 0 && this.lastupdate.long != 0) {
             this.trail.add(lat, long);
         }
@@ -89,7 +89,7 @@ export class Mapcontainer {
             if(!this.climbtrail) {
                 this.climbtrail = new Trail(this.map, [lat, long], color, {strokeWidth: 8});
                 this.numlines++;
-                if(this.numlines > 20) {
+                if(document.querySelectorAll(".climb-trail").length > 20) {
                     document.querySelector(".climb-trail")?.remove();
                     this.numlines--;
                 }
@@ -164,6 +164,7 @@ export class Trail {
         this.line = L.polyline([...coords], {
           className: trailtype,
           color: this.color,
+          strokeWidth: 8,
           ...this.opts,
         });
 

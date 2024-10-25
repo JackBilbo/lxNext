@@ -59,6 +59,8 @@ export const vars: Variable[] = [
   { name: 'localtime', unittype: 'time', simvar: 'E:LOCAL TIME', shortlabel: 'LOCAL', label: 'Local Time', precision: 0, value: 0, family: 'timer' },
   { name: 'wp_dist', unittype: 'distance', simvar: 'L:LXN_WP_DIST', shortlabel: 'WP DIST', label: 'Current Waypoint Distance', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_heading', unittype: 'angle', simvar: 'L:LXN_WP_HEADING', shortlabel: 'WP HDG', label: 'Current Waypoint Heading', precision: 0, value: 0, family: 'waypoint' },
+  { name: 'wp_arrival_height', unittype: 'altitude', simvar: 'L:LXN_WP_ARRIVAL_HEIGHT', shortlabel: 'WP ARR MSL', label: 'Estimated Arrival Height MSL', precision: 0, value: 0, family: 'waypoint' },
+  { name: 'wp_ete', unittype: 'time', simvar: 'L:LXN_WP_ETE', shortlabel: 'WP ETE', label: 'Estimated Time to Fly to Waypoint', precision: 0, value: 0, family: 'waypoint' },
 ]
 
 export const staticvars:{[key: string]: number|string} = {}

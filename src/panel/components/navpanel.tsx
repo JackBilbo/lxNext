@@ -342,22 +342,30 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
             this.coursetofly = this.task.get_wp(this.index - 1).bearingTo(this.waypoint.lat, this.waypoint.lon);
         }
         
+        let ete_s: number;
         /* Calculate ETE and Arrivalheight */
         if(simUnits === 0) {
             /* Imperial units, so convert */
             this.arrivalheight.set(Math.round((calculateArrivalheight(this.distance.get() * 1852, this.coursetofly, this.startaltitude / 3.281)) * 3.281));
-            this.ete.set(this.formatValue(calculateTimeToFly(this.distance.get() * 1852, this.coursetofly)));
+            ete_s = calculateTimeToFly(this.distance.get() * 1852, this.coursetofly);
+            this.ete.set(this.formatValue(ete_s));
+            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "nmiles", this.arrivalheight.get());
         } else if(simUnits === 1) {
             /* hybrid */
-            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get(), this.coursetofly, this.startaltitude / 3.281) * 3.281));
-            this.ete.set(this.formatValue(calculateTimeToFly(this.distance.get() * 1000, this.coursetofly)));
+            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get() * 1000, this.coursetofly, this.startaltitude / 3.281) * 3.281));
+            ete_s = calculateTimeToFly(this.distance.get() * 1000, this.coursetofly);
+            this.ete.set(this.formatValue(ete_s));
+            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "m", this.arrivalheight.get());
         } else {
             /* metric */
             console.log(calculateArrivalheight(this.distance.get(), this.coursetofly, this.startaltitude));
-            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get(), this.coursetofly, this.startaltitude)));
-            this.ete.set(this.formatValue(calculateTimeToFly(this.distance.get() * 1000, this.coursetofly)));
+            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get() * 1000, this.coursetofly, this.startaltitude)));
+            ete_s = calculateTimeToFly(this.distance.get() * 1000, this.coursetofly);
+            this.ete.set(this.formatValue(ete_s));
+            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "m", this.arrivalheight.get());
         }
 
+        SimVar.SetSimVarValue("L:LXN_WP_ETE", "s", ete_s);
     }
 
     private formatValue(val: number): string {
