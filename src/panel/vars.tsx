@@ -44,7 +44,7 @@ export const Units: UnitVariables = {
 export const vars: Variable[] = [
   { name: 'ias', unittype: 'speed', simvar: 'AIRSPEED INDICATED', shortlabel: 'IAS', label: 'Indicated Airspeed', precision: 0, value: 0, family: 'ac' },
   { name: 'alt_agl', unittype: 'altitude', simvar: 'PLANE ALT ABOVE GROUND', shortlabel: 'ALT AGL', label: 'Altitude Above Ground', precision: 0, value: 0, family: 'ac' },
-  { name: 'alt', unittype: 'altitude', simvar: 'INDICATED ALTITUDE', shortlabel: 'ALT', label: 'Indicated Altitude', precision: 0, value: 0, family: 'ac' },
+  { name: 'alt', unittype: 'altitude', simvar: 'PLANE ALTITUDE', shortlabel: 'ALT', label: 'Indicated Altitude', precision: 0, value: 0, family: 'ac' },
   { name: 'maccready', unittype: 'verticalspeed', simvar: 'VARIOMETER MAC CREADY SETTING', shortlabel: 'MC', label: 'Mac Cready Setting', precision: 1, value: 0, family: 'ac' },
   { name: 'totalenergy', unittype: 'verticalspeed', simvar: 'L:LXN_TE', shortlabel: 'TE', label: 'Totel Energy', precision: 1, value: 0, family: 'ac' },  
   { name: 'heading', unittype: 'angle', simvar: 'PLANE HEADING DEGREES TRUE', shortlabel: 'HDG', label: 'Aircraft Heading', precision: 0, value: 0, family: 'ac' },
@@ -60,6 +60,7 @@ export const vars: Variable[] = [
   { name: 'wp_dist', unittype: 'distance', simvar: 'L:LXN_WP_DIST', shortlabel: 'WP DIST', label: 'Current Waypoint Distance', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_heading', unittype: 'angle', simvar: 'L:LXN_WP_HEADING', shortlabel: 'WP HDG', label: 'Current Waypoint Heading', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_arrival_height', unittype: 'altitude', simvar: 'L:LXN_WP_ARRIVAL_HEIGHT', shortlabel: 'WP ARR MSL', label: 'Estimated Arrival Height MSL', precision: 0, value: 0, family: 'waypoint' },
+  { name: 'wp_arrival_height_agl', unittype: 'altitude', simvar: 'L:LXN_WP_ARRIVAL_HEIGHT_AGL', shortlabel: 'WP ARR AGL', label: 'Estimated Arrival Height above Ground/WP Min', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_ete', unittype: 'time', simvar: 'L:LXN_WP_ETE', shortlabel: 'WP ETE', label: 'Estimated Time to Fly to Waypoint', precision: 0, value: 0, family: 'waypoint' },
 ]
 

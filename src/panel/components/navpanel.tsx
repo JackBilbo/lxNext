@@ -1,6 +1,6 @@
 import { FSComponent, DisplayComponent, NodeReference, VNode, ComponentProps, Subscribable, ConsumerSubject, Subject, EventBus, FacilityLoader, FacilityRepository, AirportFacility, FacilitySearchType, FacilityType, GeoPoint, UnitType } from '@microsoft/msfs-sdk';
 import { FSEvents, simUnits, Units, staticvars, earthradius } from '../vars';
-import { checkSimVarLoaded } from './utils';
+import { checkSimVarLoaded, pref } from './utils';
 import { calculateArrivalheight, calculateTimeToFly } from './customvars';
 import { Navmap } from './interface';
 import L from "leaflet";
@@ -14,7 +14,7 @@ interface TaskProps extends ComponentProps {
 }
 
 interface AirportentryProps extends ComponentProps {
-    airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number};
+    airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number, altitude: number};
     task: Task;
 }
 
@@ -26,6 +26,7 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
     private eventBus: EventBus = this.props.eventBus;
     private facLoader: any;
 
+    private panelref = FSComponent.createRef<HTMLDivElement>();
     private tabsref = FSComponent.createRef<HTMLDivElement>();
     private taskbuttonref = FSComponent.createRef<HTMLButtonElement>();
     private airportbuttonref = FSComponent.createRef<HTMLButtonElement>();
@@ -44,7 +45,7 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
 
     render(): VNode {
         return(
-            <div id="navpanel" class="panel active">
+            <div id="navpanel" class="panel" ref={this.panelref}>
                 <div class="tabs" ref={this.tabsref}>
                     <button ref={this.taskbuttonref} class="active">Task</button>
                     <button ref={this.airportbuttonref}>Nearest Airports</button>
@@ -55,7 +56,8 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
                     </div>
                     <div ref={this.airportpanelref} class="airportlist">
                     </div>
-                </div>      
+                </div>
+                <a href="#" id="tabclose">x</a>      
             </div>
         )
    
@@ -79,12 +81,23 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
             this.airportpanelref.instance.classList.add('active');
         });
 
-        ownPosition.set(SimVar.GetSimVarValue("A:PLANE LATITUDE", "degree latitude"), SimVar.GetSimVarValue("A:PLANE LONGITUDE", "degree longitude"));
-        let tempwp = new Waypoint(ownPosition.lat, ownPosition.lon, SimVar.GetSimVarValue("INDICATED ALTITUDE", "m"), 500, "Home");
-        this.taskref.instance.create("Basic Task", [ tempwp ]);
+        setTimeout(() => {
+            ownPosition.set(SimVar.GetSimVarValue("A:PLANE LATITUDE", "degree latitude"), SimVar.GetSimVarValue("A:PLANE LONGITUDE", "degree longitude"));
+            let tempwp = new Waypoint(ownPosition.lat, ownPosition.lon, staticvars.alt as number, 500, "Home");
+            this.taskref.instance.create("Basic Task", [ tempwp ]);
+        },1000);
+
+        this.panelref.instance.querySelector('#tabclose')!.addEventListener('click', () => {
+            this.closePanel();
+        })
+        
 
         this.loadAirports(this.eventBus);
     } 
+
+    public closePanel() {
+        this.panelref.instance.classList.remove('active');
+    }
 
     public update() {
 
@@ -139,23 +152,26 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
 
 
 class Airportentry extends DisplayComponent<AirportentryProps> {
-    private airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number} = this.props.airport;
+    private airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number, altitude: number} = this.props.airport;
     private thisref = FSComponent.createRef<HTMLDivElement>();
     private currentDistance = Subject.create<number>(0);
     private currentBearing = Subject.create<string>("");
     private currentHeading = Subject.create<number>(0);
+    private altitude = Subject.create<number>(Math.round(pref('altitude', 'm', this.airport.altitude) as number));
     private unit = Subject.create<string>(Units.distance[simUnits].label);
+    private altunit = Subject.create<string>(Units.altitude[simUnits].label);
     private task = this.props.task;
 
     constructor(props: AirportentryProps) {
         super(props);
+        this.airport = this.props.airport;
 
     }
     render(): VNode {
         return (
             <div ref={this.thisref} class="ap_entry">
                 <div class="ap_icao">{this.airport.icao.replace(/A\s*/,'')}</div>
-                <div class="ap_name">{Utils.Translate(this.airport.name)}</div>
+                <div class="ap_name">{Utils.Translate(this.airport.name)} ({this.altitude} {this.altunit})</div>
                 <div class="ap_bearing">{this.currentHeading}&deg; <span style={this.currentBearing}>&uarr;</span></div>
                 <div class="ap_distance">{this.currentDistance} {this.unit}</div>
             </div>
@@ -165,7 +181,10 @@ class Airportentry extends DisplayComponent<AirportentryProps> {
     onAfterRender(node: VNode): void {
         super.onAfterRender(node);
         this.thisref.instance.addEventListener('click', () => {
-            this.task.create("DTO", [ new Waypoint(this.airport.lat, this.airport.lon, 0, 500, Utils.Translate(this.airport.name)) ]);
+            document.querySelectorAll('.ap_entry.selected').forEach((el) => { el.classList.remove('selected') });
+            this.thisref.instance.classList.add('selected');
+            let alt = this.airport.altitude !== undefined ? this.airport.altitude : 0;
+            this.task.create("DTO", [ new Waypoint(this.airport.lat, this.airport.lon, alt, 500, Utils.Translate(this.airport.name)) ]);
         })
     }
 
@@ -195,7 +214,7 @@ class Task extends DisplayComponent<TaskProps> {
     public waypointlistref = FSComponent.createRef<HTMLDivElement>();
 
     create(name: string, waypoints: Waypoint[]) {
-        this.waypointentries.forEach((w) => { console.log(w); w.instance.destroy(); });
+        this.waypointentries.forEach((w) => { if (w.instance) w.instance.destroy(); });
         this.name.set(name);
         this.waypoints.set(waypoints);
         this.current_waypoint_index.set(0);
@@ -229,7 +248,6 @@ class Task extends DisplayComponent<TaskProps> {
         super.onAfterRender(node);
         this.waypointlistref.instance.innerHTML = ""; //
 
-        console.log(this.waypoints.get());
         this.waypoints.sub((ele) => {
             // this.waypointlistref.instance.innerHTML = "";
             ele.forEach((wp,i) => {       
@@ -255,6 +273,7 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
     private waypoint: Waypoint = this.props.waypoint;
     private waypointclass = Subject.create<string>("waypoint");
     private name = Subject.create<string>(this.waypoint.name);
+    private alt = Subject.create<number>(Math.round(this.waypoint.alt));
     private distance = Subject.create<number>(0);
     private bearing = Subject.create<number>(0);
     private arrivalheight = Subject.create<number>(0);
@@ -309,13 +328,13 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
         if(this.isCurrentwaypoint()) {
             this.updateWaypointvars();
         }
-        
-        
+
+        console.log(this.waypoint);
     }
     render(): VNode {
         return (
             <div ref={this.htmlref} class={this.waypointclass}>
-               <div class="wp_name">{this.name} ({this.waypoint.alt})</div>
+               <div class="wp_name">{this.name} ({this.alt} {this.altunit})</div>
                <div class="wp_minmax">min. {this.waypoint.min_alt} / max.{this.waypoint.max_alt}</div>
                <div class="wp_bearing">{this.bearing}&deg; <span style={this.currentBearing}>&uarr;</span></div>
                <div class="wp_distance">{this.distance} {this.unit}</div>
@@ -349,20 +368,22 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
             this.arrivalheight.set(Math.round((calculateArrivalheight(this.distance.get() * 1852, this.coursetofly, this.startaltitude / 3.281)) * 3.281));
             ete_s = calculateTimeToFly(this.distance.get() * 1852, this.coursetofly);
             this.ete.set(this.formatValue(ete_s));
-            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "nmiles", this.arrivalheight.get());
+            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "ft", this.arrivalheight.get());
+            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "ft", this.arrivalheight.get() - (this.alt.get() * 3.281));
         } else if(simUnits === 1) {
             /* hybrid */
             this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get() * 1000, this.coursetofly, this.startaltitude / 3.281) * 3.281));
             ete_s = calculateTimeToFly(this.distance.get() * 1000, this.coursetofly);
             this.ete.set(this.formatValue(ete_s));
-            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "m", this.arrivalheight.get());
+            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "m", this.arrivalheight.get() - this.alt.get());
         } else {
             /* metric */
-            console.log(calculateArrivalheight(this.distance.get(), this.coursetofly, this.startaltitude));
+            
             this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get() * 1000, this.coursetofly, this.startaltitude)));
             ete_s = calculateTimeToFly(this.distance.get() * 1000, this.coursetofly);
             this.ete.set(this.formatValue(ete_s));
             SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "m", this.arrivalheight.get());
+            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "m", this.arrivalheight.get() - this.alt.get());
         }
 
         SimVar.SetSimVarValue("L:LXN_WP_ETE", "s", ete_s);
@@ -386,7 +407,6 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
         this.waypointmapmarker.remove();
         this.waypointlegline.remove();
         this.htmlref.instance.remove();
-        console.log("waypoint destroying");
     }
 }
 

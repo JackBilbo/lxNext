@@ -60,6 +60,6 @@ export class Datafield extends DisplayComponent<DatafieldProps> {
     let seconds = Math.floor(time % 60);
     let minutes = Math.floor((time / 60) % 60);
     let hours = Math.floor(Math.min(time / 3600, 99));
-    return prefix + hours + ":" + ("0" + minutes).substr(-2) + ":" + ("0" + seconds).substr(-2);
+    return prefix + (val > 3600 ? hours + ":" : "") + ("0" + minutes).substr(-2) + ":" + ("0" + seconds).substr(-2);
   }
 }

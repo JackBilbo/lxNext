@@ -22,6 +22,7 @@ import { Navpanel, ownPosition } from './components/navpanel';
 
 import { Keybinds } from './components/keybinds';
 
+var isVR = false;
 
 class lxnext  {
     private readonly eventBus = new EventBus();
@@ -111,6 +112,16 @@ class lxnext  {
         if(simUnits != n) {
             this.eventBus.getPublisher<FSEvents>().pub('simUnits', n);
             setSimUnits(n);
+        }
+
+        const vr = await SimVar.GetSimVarValue("E:IS IN VR", "boolean");
+        if(isVR != vr) {
+            if(vr == 1) {
+                this.root.classList.add('vr');
+            } else {
+                this.root.classList.remove('vr');
+            }
+            isVR = vr;
         }
 
         this.Navpanelref.instance?.update();
