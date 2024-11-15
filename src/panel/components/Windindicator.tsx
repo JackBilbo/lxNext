@@ -17,6 +17,7 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
     private arrowstyle = Subject.create<string>('');
     private textfieldstyle = Subject.create<string>('');
     private courselinestyle = Subject.create<string>('');
+    private tracklinestyle = Subject.create<string>('');
 
     private unit = Subject.create<string>(Units["windspeed"][simUnits].label);
 
@@ -31,6 +32,7 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
         const rosestyle = subscriber.on('heading').withPrecision(0).whenChanged().handle((hdg) => {
             this.windrosestyle.set(`transform: rotate(${-1 * hdg}deg);`);
             this.courselinestyle.set(`transform: rotate(${staticvars.wp_heading}deg);`);
+            this.tracklinestyle.set(`transform: rotate(${staticvars.groundtrack}deg);`);
         });
 
         const arrowstyle = subscriber.on('winddirection').withPrecision(0).whenChanged().handle((wd) => {
@@ -60,6 +62,7 @@ export class Windindicator extends DisplayComponent<WindindicatorProps> {
             <div ref={this.elementRef} class="windindicator">
                 <div class="heading">{this.heading}</div>
                 <div class="windrose" style={this.windrosestyle}>
+                    <div class="trackline" style={this.tracklinestyle}></div>
                     <div class="courseline" style={this.courselinestyle}></div>
                     <div class="arrow" style={this.arrowstyle}><svg id="windtriangle" viewBox="0 0 100 100"><polygon points="50 100, 100 15, 0 15"/></svg>
                         <div class="direction" style={this.textfieldstyle}>{this.winddirection}&deg;</div>

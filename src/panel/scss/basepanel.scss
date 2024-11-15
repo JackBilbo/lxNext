@@ -21,3 +21,14 @@
   ingame-ui-header {
     pointer-events: auto;
   }
+
+  #CustomPanel.ishidden {
+    * {
+      visibility: hidden !important;
+    }
+
+    .toolbar, .toolbar * {
+      visibility: visible !important;
+    }
+  
+  }

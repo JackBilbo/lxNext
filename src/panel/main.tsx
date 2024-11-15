@@ -48,7 +48,7 @@ class lxnext  {
     public connectedCallback(): void {
 
         localStorageGet('lxn_layout').then((layout) => {
-            if(layout) {
+            if(layout && layout != "reset") {
                 this.grid.load(JSON.parse(layout as string))
             } else {
                 this.grid.load(defaultgrid);

@@ -62,11 +62,13 @@ export class Toolbar extends DisplayComponent<ToolbarProps> {
                 <button id="nav">Nav</button>
                 <button id="config" disabled>Cfg.</button>
                 <button id="mapswitch">Map</button>
+                <button id="hideswitch">Hide</button>
                 <div id="widgetmenu">
                   <h6>Add:</h6>
                   <button id="adddatafield">Datafield</button>
                   <button id="windindicator">Windindicator</button>
                   <button id="addTaskbar" disabled>Taskbar</button>
+                  <button id="resetAll">Reset Interface</button>
                 </div>
             </div>
           )
@@ -96,9 +98,14 @@ export class Toolbar extends DisplayComponent<ToolbarProps> {
         document.getElementById('nav')?.addEventListener('click', () =>document.getElementById('navpanel')?.classList.toggle('active'));
         document.getElementById('config')?.addEventListener('click', () => console.log("configpanel"));
         document.getElementById('mapswitch')?.addEventListener('click', () => toggleMap());
+        document.getElementById('hideswitch')?.addEventListener('click', () => toggleVisibility());
 
         document.getElementById('adddatafield')?.addEventListener('click', () => addLxnWidget('datafield','alt_agl', this.props.grid, this.eventBus));
         document.getElementById('windindicator')?.addEventListener('click', () => addLxnWidget('windindicator', null, this.props.grid, this.eventBus));
+
+        document.getElementById('resetAll')?.addEventListener('click', () => {
+          localStorageSet("lxn_layout", "reset");
+        });
 
     }
   }
@@ -154,3 +161,7 @@ export function toggleMap(): void {
       Navmap!.isvisible = false;
     }
 } 
+
+function toggleVisibility(): void {
+    document.getElementById('CustomPanel')!.classList.toggle('ishidden');
+}
