@@ -11,6 +11,8 @@
         line-height: calc(var(--rootsize) * 0.5);
         text-align: center;
         font-size: calc(var(--rootsize) * 0.2);
+        min-width: 30px;
+        min-height: 30px;
     }
 
     #widgetmenu {

@@ -49,6 +49,7 @@ export const vars: Variable[] = [
   { name: 'totalenergy', unittype: 'verticalspeed', simvar: 'L:LXN_TE', shortlabel: 'TE', label: 'Totel Energy', precision: 1, value: 0, family: 'ac' },  
   { name: 'heading', unittype: 'angle', simvar: 'PLANE HEADING DEGREES TRUE', shortlabel: 'HDG', label: 'Aircraft Heading', precision: 0, value: 0, family: 'ac' },
   { name: 'groundtrack', unittype: 'angle', simvar: 'GPS GROUND TRUE TRACK', shortlabel: 'TRK', label: 'Ground Track', precision: 0, value: 0, family: 'ac' },
+  { name: 'groundspeed', unittype: 'speed', simvar: 'A:GPS GROUND SPEED', shortlabel: 'GND SPD', label: 'Ground Speed', precision: 0, value: 0, family: 'ac' },
   { name: 'stf', unittype: 'speed', simvar: 'L:LXN_STF', shortlabel: 'STF', label: 'Speed to Fly', precision: 0, value: 0, family: 'ac' },
   { name: 'planelat', unittype: 'positionlat', simvar: 'A:PLANE LATITUDE', shortlabel: 'LAT', label: 'Aircraft Latitude', precision: 0, value: 53, family: 'none' },
   { name: 'planelong', unittype: 'positionlong', simvar: 'A:PLANE LONGITUDE', shortlabel: 'LONG', label: 'Aircraft Longitude', precision: 0, value: 10, family: 'none' },
@@ -74,6 +75,13 @@ export const varfamilies = [
   { name: 'timer', label: 'Timer'},
   { name: 'none', label: 'none'},
 ]
+
+export const colors = {
+    activeleg: '#C60AC6',
+    flightplanleg: '#ffcc00',
+    validwaypoint: '#00ff00',
+    missedwaypoint: '#ff0000',
+}
 
 export interface FSEvents {
     ias: number;

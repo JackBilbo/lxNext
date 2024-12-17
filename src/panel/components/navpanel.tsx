@@ -1,5 +1,5 @@
 import { FSComponent, DisplayComponent, NodeReference, VNode, ComponentProps, Subscribable, ConsumerSubject, Subject, EventBus, FacilityLoader, FacilityRepository, AirportFacility, FacilitySearchType, FacilityType, GeoPoint, UnitType } from '@microsoft/msfs-sdk';
-import { FSEvents, simUnits, Units, staticvars, earthradius } from '../vars';
+import { FSEvents, simUnits, Units, staticvars, earthradius, colors } from '../vars';
 import { checkSimVarLoaded, pref } from './utils';
 import { calculateArrivalheight, calculateTimeToFly } from './customvars';
 import { Navmap } from './interface';
@@ -14,7 +14,7 @@ interface TaskProps extends ComponentProps {
 }
 
 interface AirportentryProps extends ComponentProps {
-    airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number, altitude: number};
+    airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number, altitude: number };
     task: Task;
 }
 
@@ -83,8 +83,9 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
 
         setTimeout(() => {
             ownPosition.set(SimVar.GetSimVarValue("A:PLANE LATITUDE", "degree latitude"), SimVar.GetSimVarValue("A:PLANE LONGITUDE", "degree longitude"));
+            let testwp = new Waypoint(53.45, 10.3, 1000, 750, "Test WP");
             let tempwp = new Waypoint(ownPosition.lat, ownPosition.lon, staticvars.alt as number, 500, "Home");
-            this.taskref.instance.create("Basic Task", [ tempwp ]);
+            this.taskref.instance.create("Basic Task", [ testwp,tempwp ]);
         },1000);
 
         this.panelref.instance.querySelector('#tabclose')!.addEventListener('click', () => {
@@ -115,11 +116,13 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
             const lon = ownPosition.lon; 
           
             const distanceMeters = 100000;
-            const diff = await session.searchNearest(lat, lon, distanceMeters, 25);
+            const diff = await session.searchNearest(lat, lon, distanceMeters, 20);
           
             for (let i = 0; i < diff.removed.length; i++) {
               nearestAirports.delete(diff.removed[i]);
-              this.airportrefs[diff.removed[i].icao].instance.remove();
+              if( this.airportrefs[diff.removed[i]]){
+                this.airportrefs[diff.removed[i]].instance.remove();
+              }
             }
           
             await Promise.all(diff.added.map(async (icao: string) => {
@@ -152,7 +155,7 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
 
 
 class Airportentry extends DisplayComponent<AirportentryProps> {
-    private airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number, altitude: number} = this.props.airport;
+    private airport: {name: string, icao: string, lat: number, lon: number, distance_m: number, bearing: number, altitude: number } = this.props.airport;
     private thisref = FSComponent.createRef<HTMLDivElement>();
     private currentDistance = Subject.create<number>(0);
     private currentBearing = Subject.create<string>("");
@@ -229,6 +232,13 @@ class Task extends DisplayComponent<TaskProps> {
         return this.waypoints.get()[i];
     }
 
+    public next_wp() {
+        if(this.waypoints.get().length > this.current_waypoint_index.get()) {
+            this.current_waypoint_index.set(this.current_waypoint_index.get() + 1);
+        }
+        
+    }
+
     update() {
         
     }
@@ -270,13 +280,14 @@ interface WaypointDisplayProps extends ComponentProps {
 class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
     private task = this.props.task;
     private eventBus = this.props.eventBus;
-    private waypoint: Waypoint = this.props.waypoint;
+    public waypoint: Waypoint = this.props.waypoint;
     private waypointclass = Subject.create<string>("waypoint");
-    private name = Subject.create<string>(this.waypoint.name);
-    private alt = Subject.create<number>(Math.round(this.waypoint.alt));
-    private distance = Subject.create<number>(0);
+    public name = Subject.create<string>(this.waypoint.name);
+    public alt = Subject.create<number>(Math.round(this.waypoint.alt));
+    public distance = Subject.create<number>(0);
+    public distance_m:number = 0;
     private bearing = Subject.create<number>(0);
-    private arrivalheight = Subject.create<number>(0);
+    public arrivalheight = Subject.create<number>(0);
     private ete = Subject.create<string>('00:00:00');
     private currentBearing = Subject.create<string>("");
     private planeLat: number = staticvars.planelat as number;
@@ -287,6 +298,8 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
     private htmlref = FSComponent.createRef<HTMLDivElement>();
     private startaltitude: number = 0;
     private coursetofly: number = 0;
+    private distancetofly: number = 0;
+    private isChecked: boolean = false;
 
     private waypointmapmarker: L.Circle;
     private waypointlegline: L.Polyline;
@@ -295,13 +308,13 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
         super(props);
 
         this.waypointmapmarker = L.circle([this.waypoint.lat, this.waypoint.lon], this.waypoint.radius, {
-            color: '#C60AC6',
-            fillColor: '#C60AC6',
+            color: colors.flightplanleg,
+            fillColor: colors.flightplanleg,
             fillOpacity: 0.3
         }).addTo(Navmap!.map);
 
-        this.waypointlegline = L.polyline([[this.planeLat, this.planeLong],[this.waypoint.lat, this.waypoint.lon]], { 
-            color: '#ffcc00',
+        this.waypointlegline = L.polyline([[this.index > 0 ? this.task.get_wp(this.index - 1).lat : this.planeLat, this.index > 0 ? this.task.get_wp(this.index - 1).lon : this.planeLong],[this.waypoint.lat, this.waypoint.lon]], { 
+            color: colors.flightplanleg,
             weight: 3 
         }).addTo(Navmap!.map);
 
@@ -312,24 +325,16 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
 
         const lat_consumer = subscriber.on('planelat').onlyAfter(1000).whenChanged().handle((lat) => {
             this.planeLat = lat;
-            this.distance.set(Math.round(this.waypoint.distance(this.planeLat, this.planeLong) * earthradius[Units.distance[simUnits].simunit]));
-            this.bearing.set(Math.round(this.waypoint.bearingFrom(this.planeLat, this.planeLong)));
-            if(this.index === this.task.current_waypoint_index.get()) {
-                this.updateWaypointvars();
-            }
+            this.updateWaypointvars();
         });
 
         const long_consumer = subscriber.on('planelong').onlyAfter(1000).whenChanged().handle((long) => {
             this.planeLong = long;
-            this.distance.set(Math.round(this.waypoint.distance(this.planeLat, this.planeLong) * earthradius[Units.distance[simUnits].simunit]));
-            this.bearing.set(Math.round(this.waypoint.bearingFrom(this.planeLat, this.planeLong)));
         });
 
-        if(this.isCurrentwaypoint()) {
-            this.updateWaypointvars();
-        }
-
-        console.log(this.waypoint);
+        
+        this.updateWaypointvars();
+        
     }
     render(): VNode {
         return (
@@ -346,47 +351,94 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
 
     updateWaypointvars() {
         this.currentBearing.set("transform: rotate(" + Math.round(this.bearing.get() - (staticvars.heading as number)) + "deg");
-        this.waypointlegline.setLatLngs([[this.planeLat, this.planeLong],[this.waypoint.lat, this.waypoint.lon]]);
-
+        
         if(this.isCurrentwaypoint()) {
+            this.distance.set(Math.round(this.waypoint.distance(this.planeLat, this.planeLong) * earthradius[Units.distance[simUnits].simunit]));
+            this.distance_m = this.waypoint.distance(this.planeLat, this.planeLong) * earthradius['m'];
+            this.bearing.set(Math.round(this.waypoint.bearingFrom(this.planeLat, this.planeLong)));
+
+            this.waypointlegline
+                .setLatLngs([[this.planeLat, this.planeLong],[this.waypoint.lat, this.waypoint.lon]])
+                .setStyle({ color: colors.activeleg });
+
+            this.waypointmapmarker.setStyle({ color: colors.activeleg, fillColor: colors.activeleg });
+
             SimVar.SetSimVarValue("L:LXN_WP_DIST", "km", this.distance.get());
             SimVar.SetSimVarValue("L:LXN_WP_HEADING", "deg", this.bearing.get());
             this.waypointclass.set("waypoint wp_current");
 
             this.startaltitude = staticvars.alt as number;
             this.coursetofly = this.bearing.get();
+            this.distancetofly = this.distance.get();
+
+            if(this.planeInsideWaypoint()) {
+                this.task.next_wp();
+            }
+
         } else {
-            this.waypointclass.set("waypoint");
-            this.startaltitude = this.task.get_wp(this.index - 1).alt;
-            this.coursetofly = this.task.get_wp(this.index - 1).bearingTo(this.waypoint.lat, this.waypoint.lon);
+            if(this.index > this.task.current_waypoint_index.get()) {
+                this.waypointlegline
+                .setLatLngs([[this.task.get_wp(this.index - 1).lat,  this.task.get_wp(this.index - 1).lon],[this.waypoint.lat, this.waypoint.lon]])
+                .setStyle({ color: colors.flightplanleg });
+
+                this.waypointmapmarker.setStyle({ color: colors.flightplanleg, fillColor: colors.flightplanleg });
+
+                this.waypointclass.set("waypoint");
+                
+                this.startaltitude = this.task.get_wp(this.index - 1).arrivalheight;
+                this.coursetofly = this.task.get_wp(this.index - 1).bearingTo(this.waypoint.lat, this.waypoint.lon);
+                this.distancetofly = this.task.get_wp(this.index - 1).distance(this.waypoint.lat, this.waypoint.lon) * earthradius[Units.distance[simUnits].simunit];
+                this.distance.set(Math.round(this.distancetofly));
+                this.bearing.set(Math.round(this.coursetofly));
+            
+            } else {
+                this.waypointlegline.remove();
+                this.waypointmapmarker.setStyle({ color: (this.isChecked ? colors.validwaypoint : colors.missedwaypoint), fillColor: (this.isChecked ? colors.validwaypoint : colors.missedwaypoint) });
+                this.waypointclass.set("waypoint");
+                this.arrivalheight.set(0);
+                this.ete.set(this.formatValue(0));
+                return;
+            }
+            
         }
         
         let ete_s: number;
         /* Calculate ETE and Arrivalheight */
         if(simUnits === 0) {
             /* Imperial units, so convert */
-            this.arrivalheight.set(Math.round((calculateArrivalheight(this.distance.get() * 1852, this.coursetofly, this.startaltitude / 3.281)) * 3.281));
-            ete_s = calculateTimeToFly(this.distance.get() * 1852, this.coursetofly);
+            this.arrivalheight.set(Math.round((calculateArrivalheight(this.distancetofly * 1852, this.coursetofly, this.startaltitude / 3.281)) * 3.281));
+            ete_s = calculateTimeToFly(this.distancetofly * 1852, this.coursetofly);
             this.ete.set(this.formatValue(ete_s));
-            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "ft", this.arrivalheight.get());
-            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "ft", this.arrivalheight.get() - (this.alt.get() * 3.281));
+            if(this.isCurrentwaypoint()) {
+                SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "ft", this.arrivalheight.get());
+                SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "ft", this.arrivalheight.get() - (this.alt.get() * 3.281));
+            }
         } else if(simUnits === 1) {
             /* hybrid */
-            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get() * 1000, this.coursetofly, this.startaltitude / 3.281) * 3.281));
-            ete_s = calculateTimeToFly(this.distance.get() * 1000, this.coursetofly);
+            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distancetofly * 1000, this.coursetofly, this.startaltitude / 3.281) * 3.281));
+            ete_s = calculateTimeToFly(this.distancetofly * 1000, this.coursetofly);
             this.ete.set(this.formatValue(ete_s));
-            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "m", this.arrivalheight.get() - this.alt.get());
+            if(this.isCurrentwaypoint()) {
+                SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "m", this.arrivalheight.get());
+                SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "m", this.arrivalheight.get() - this.alt.get());
+            }
         } else {
             /* metric */
             
-            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distance.get() * 1000, this.coursetofly, this.startaltitude)));
-            ete_s = calculateTimeToFly(this.distance.get() * 1000, this.coursetofly);
+            this.arrivalheight.set(Math.round(calculateArrivalheight(this.distancetofly * 1000, this.coursetofly, this.startaltitude)));
+            ete_s = calculateTimeToFly(this.distancetofly * 1000, this.coursetofly);
             this.ete.set(this.formatValue(ete_s));
-            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "m", this.arrivalheight.get());
-            SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "m", this.arrivalheight.get() - this.alt.get());
+            if(this.isCurrentwaypoint()) {
+                SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT", "m", this.arrivalheight.get());
+                SimVar.SetSimVarValue("L:LXN_WP_ARRIVAL_HEIGHT_AGL", "m", this.arrivalheight.get() - this.alt.get());
+            }
         }
 
+        this.task.get_wp(this.index).arrivalheight = this.arrivalheight.get();
+
         SimVar.SetSimVarValue("L:LXN_WP_ETE", "s", ete_s);
+
+    
     }
 
     private formatValue(val: number): string {
@@ -408,6 +460,16 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
         this.waypointlegline.remove();
         this.htmlref.instance.remove();
     }
+
+    planeInsideWaypoint() {
+        if(this.distance_m <= 0) return false;
+        if(this.waypoint.radius > this.distance_m && this.distance_m > 0) {
+            this.isChecked = true;
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 interface WaypointInterface extends GeoPoint {
@@ -424,6 +486,7 @@ class Waypoint extends GeoPoint implements WaypointInterface {
     public name: string;
     public max_alt: number | null;
     public min_alt: number | null;
+    public arrivalheight: number;
     constructor(lat: number, lon: number, alt: number, radius?: number, name?: string) {
         super(lat, lon);
         this.alt = alt;
@@ -431,6 +494,7 @@ class Waypoint extends GeoPoint implements WaypointInterface {
         this.radius = radius ?? 500;
         this.max_alt = alt ?? null;
         this.min_alt = alt ?? null;
+        this.arrivalheight = alt;
     }
 
     update() {
