@@ -4,6 +4,7 @@ import { checkSimVarLoaded, pref } from './utils';
 import { calculateArrivalheight, calculateTimeToFly } from './customvars';
 import { Navmap } from './interface';
 import L from "leaflet";
+import { Tasklist, Tasktemplate } from './tasklist';
 
 interface NavPanelProps extends ComponentProps {
     eventBus: EventBus; 
@@ -53,6 +54,7 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
                 <div id="tabcontent">
                     <div ref={this.taskpanelref} class="active">
                         <Task eventBus={this.eventBus} ref={this.taskref} />
+                        
                     </div>
                     <div ref={this.airportpanelref} class="airportlist">
                     </div>
@@ -83,9 +85,9 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
 
         setTimeout(() => {
             ownPosition.set(SimVar.GetSimVarValue("A:PLANE LATITUDE", "degree latitude"), SimVar.GetSimVarValue("A:PLANE LONGITUDE", "degree longitude"));
-            let testwp = new Waypoint(53.45, 10.3, 1000, 750, "Test WP");
+            // let testwp = new Waypoint(53.45, 10.3, 1000, 750, "Test WP");
             let tempwp = new Waypoint(ownPosition.lat, ownPosition.lon, staticvars.alt as number, 500, "Home");
-            this.taskref.instance.create("Basic Task", [ testwp,tempwp ]);
+            this.taskref.instance.create("Basic Task", [ tempwp ]);
         },1000);
 
         this.panelref.instance.querySelector('#tabclose')!.addEventListener('click', () => {
@@ -207,7 +209,7 @@ class Airportentry extends DisplayComponent<AirportentryProps> {
     }
 }
 
-class Task extends DisplayComponent<TaskProps> {
+export class Task extends DisplayComponent<TaskProps> {
     private eventBus = this.props.eventBus;
     public name = Subject.create<string>("Task");
     public status = Subject.create<string>("Prestart");
@@ -215,6 +217,7 @@ class Task extends DisplayComponent<TaskProps> {
     public current_waypoint_index = Subject.create<number>(0);
     private waypointentries: NodeReference<WaypointDisplay>[] = [];
     public waypointlistref = FSComponent.createRef<HTMLDivElement>();
+    public tasksearchref = FSComponent.createRef<HTMLDivElement>();
 
     create(name: string, waypoints: Waypoint[]) {
         this.waypointentries.forEach((w) => { if (w.instance) w.instance.destroy(); });
@@ -247,11 +250,19 @@ class Task extends DisplayComponent<TaskProps> {
             <div>
                 <div class="taskheader">
                     <h2>{this.name} - {this.current_waypoint_index} / {this.waypoints.get().length}</h2>
+                    <button id="tasksearch">Search</button>
                 </div>
                 
                 <div id="waypointlist" ref={this.waypointlistref}></div>
+                <div id="tasklist" ref={this.tasksearchref}>
+                    <Tasklist eventBus={this.eventBus} taskref={this} />
+                </div>
             </div>
         )
+    }
+
+    showTasklist() {
+       this.tasksearchref.instance.classList.toggle('active');
     }
 
     onAfterRender(node: VNode): void {
@@ -267,6 +278,7 @@ class Task extends DisplayComponent<TaskProps> {
             })
         })
 
+        document.getElementById('tasksearch')?.addEventListener('click', () => this.showTasklist());
     }
 } 
 
@@ -394,7 +406,7 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
             } else {
                 this.waypointlegline.remove();
                 this.waypointmapmarker.setStyle({ color: (this.isChecked ? colors.validwaypoint : colors.missedwaypoint), fillColor: (this.isChecked ? colors.validwaypoint : colors.missedwaypoint) });
-                this.waypointclass.set("waypoint");
+                this.waypointclass.set("waypoint passed");
                 this.arrivalheight.set(0);
                 this.ete.set(this.formatValue(0));
                 return;
@@ -480,7 +492,7 @@ interface WaypointInterface extends GeoPoint {
     min_alt: number | null; 
 }
 
-class Waypoint extends GeoPoint implements WaypointInterface {
+export class Waypoint extends GeoPoint implements WaypointInterface {
     public alt: number;
     public radius: number;
     public name: string;

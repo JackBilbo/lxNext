@@ -104,9 +104,19 @@
         margin-bottom: 1rem;
         border-bottom: 1px solid #666;
         color: #888;
+        position: relative;
 
         h2 {
             font-size: 1.2rem;
+            padding-right: 6rem;
+        }
+
+        #tasksearch {
+            position:absolute;
+            top: 0;
+            right: 0;
+            width: auto;
+            padding: 0 0.5rem;
         }
     }
 
@@ -116,16 +126,21 @@
         flex-wrap: wrap;
         background-color: #222222;
         border: 2px solid transparent;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
 
         &.wp_current {
             border: 2px solid #ffcc00;
+        }
+
+        &.passed {
+            color: #888;
         }
 
         &>div { padding: 1rem;}
 
         .wp_name {
             width: 100%;
-            font-size: 1rem;
             border-bottom: 1px solid #666;
         }
 
@@ -140,6 +155,44 @@
         }
         .wp_distance { width: 20%; text-align: right;}
 
+    }
+
+    #tasklist {
+        position: absolute;
+        height: calc(100% - 4rem);
+        overflow-y: scroll;
+        top: 4rem;
+        width: calc(100% - 4rem);
+        display: none;
+        padding: 2rem;
+        background-color:#222;
+
+        &.active {
+            display: block;
+        }
+
+        .idinput {
+           display: flex;
+           flex-direction: row;
+           gap:0.5rem;
+           margin-bottom: 2rem;
+
+           button {
+               width:auto;
+               padding: 0 0.5rem;
+           }
+        }
+
+        .tasklistentry {
+            background-color: #222222;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid transparent;
+
+            &:hover {
+                border: 1px solid #ffcc00;
+            }
+        }
     }
 
     #tabclose {

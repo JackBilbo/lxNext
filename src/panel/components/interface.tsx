@@ -60,7 +60,6 @@ export class Toolbar extends DisplayComponent<ToolbarProps> {
             <div class="toolbar">
                 <button id="interact">Edit</button>
                 <button id="nav">Nav</button>
-                <button id="config" disabled>Cfg.</button>
                 <button id="mapswitch">Map</button>
                 <button id="hideswitch">Hide</button>
                 <div id="widgetmenu">
@@ -96,7 +95,6 @@ export class Toolbar extends DisplayComponent<ToolbarProps> {
         document.getElementById('interact')?.addEventListener('click', () => this.interact());
         document.getElementById('add')?.addEventListener('click', () => document.getElementById('widgetmenu')?.classList.toggle('active'));
         document.getElementById('nav')?.addEventListener('click', () =>document.getElementById('navpanel')?.classList.toggle('active'));
-        document.getElementById('config')?.addEventListener('click', () => console.log("configpanel"));
         document.getElementById('mapswitch')?.addEventListener('click', () => toggleMap());
         document.getElementById('hideswitch')?.addEventListener('click', () => toggleVisibility());
 
