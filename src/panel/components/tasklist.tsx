@@ -68,8 +68,12 @@ export class Tasklist extends DisplayComponent<TaskListProps> {
                     this.taskoutput.instance.innerHTML = "";
                     data.forEach((t:{name: string, distance: number, ruleset: string, point_features:[]}) => {
                         let wp: Waypoint[] = [];
-                        t["point_features"].forEach((p:PointFeature) => {
-                            wp.push(new Waypoint(p.geometry.coordinates[1],p.geometry.coordinates[0], p.properties.elevation, (p.properties.radius ? p.properties.radius * 1000 : 500), p.properties.name));
+                        t["point_features"].forEach((p:PointFeature, i) => {
+                            let obstype = "sector";
+                            if(i == 0 || t.ruleset == "AA") {
+                                obstype = "circle";
+                            }
+                            wp.push(new Waypoint(p.geometry.coordinates[1],p.geometry.coordinates[0], p.properties.elevation, obstype ,(p.properties.radius ? p.properties.radius * 1000 : 500), p.properties.name));
                         })
                         FSComponent.render(<Tasklistentry name={t["name"]} distance={t["distance"]} ruleset={t["ruleset"]} waypoints={wp} taskref={this.taskref} />, this.taskoutput.instance);
                     })

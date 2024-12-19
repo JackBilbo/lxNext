@@ -3,8 +3,11 @@ import { FSEvents, simUnits, Units, staticvars, earthradius, colors } from '../v
 import { checkSimVarLoaded, pref } from './utils';
 import { calculateArrivalheight, calculateTimeToFly } from './customvars';
 import { Navmap } from './interface';
-import L from "leaflet";
+import * as L from "leaflet";
 import { Tasklist, Tasktemplate } from './tasklist';
+import { Semicircle } from '@mirei/leaflet-semicircle-ts';
+
+
 
 interface NavPanelProps extends ComponentProps {
     eventBus: EventBus; 
@@ -86,7 +89,7 @@ export class Navpanel extends DisplayComponent<NavPanelProps> {
         setTimeout(() => {
             ownPosition.set(SimVar.GetSimVarValue("A:PLANE LATITUDE", "degree latitude"), SimVar.GetSimVarValue("A:PLANE LONGITUDE", "degree longitude"));
             // let testwp = new Waypoint(53.45, 10.3, 1000, 750, "Test WP");
-            let tempwp = new Waypoint(ownPosition.lat, ownPosition.lon, staticvars.alt as number, 500, "Home");
+            let tempwp = new Waypoint(ownPosition.lat, ownPosition.lon, staticvars.alt as number, "circle", 500, "Home");
             this.taskref.instance.create("Basic Task", [ tempwp ]);
         },1000);
 
@@ -189,7 +192,7 @@ class Airportentry extends DisplayComponent<AirportentryProps> {
             document.querySelectorAll('.ap_entry.selected').forEach((el) => { el.classList.remove('selected') });
             this.thisref.instance.classList.add('selected');
             let alt = this.airport.altitude !== undefined ? this.airport.altitude : 0;
-            this.task.create("DTO", [ new Waypoint(this.airport.lat, this.airport.lon, alt, 500, Utils.Translate(this.airport.name)) ]);
+            this.task.create("DTO", [ new Waypoint(this.airport.lat, this.airport.lon, alt, "circle", 500, Utils.Translate(this.airport.name)) ]);
         })
     }
 
@@ -313,38 +316,27 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
     private distancetofly: number = 0;
     private isChecked: boolean = false;
 
-    private waypointmapmarker: L.Circle;
-    private waypointlegline: L.Polyline;
+    private waypointmapmarker: any;
+    private waypointlegline: any;
 
     constructor(props: WaypointDisplayProps) {
         super(props);
-
-        this.waypointmapmarker = L.circle([this.waypoint.lat, this.waypoint.lon], this.waypoint.radius, {
-            color: colors.flightplanleg,
-            fillColor: colors.flightplanleg,
-            fillOpacity: 0.3
-        }).addTo(Navmap!.map);
-
-        this.waypointlegline = L.polyline([[this.index > 0 ? this.task.get_wp(this.index - 1).lat : this.planeLat, this.index > 0 ? this.task.get_wp(this.index - 1).lon : this.planeLong],[this.waypoint.lat, this.waypoint.lon]], { 
-            color: colors.flightplanleg,
-            weight: 3 
-        }).addTo(Navmap!.map);
 
         const subscriber = this.eventBus.getSubscriber<FSEvents>();
         const unittype = subscriber.on('simUnits').whenChanged().handle((mu) => {
             this.unit.set(Units.distance[mu].label);  
         });
 
-        const lat_consumer = subscriber.on('planelat').onlyAfter(1000).whenChanged().handle((lat) => {
+        const lat_consumer = subscriber.on('planelat').onlyAfter(500).whenChanged().handle((lat) => {
             this.planeLat = lat;
             this.updateWaypointvars();
         });
 
-        const long_consumer = subscriber.on('planelong').onlyAfter(1000).whenChanged().handle((long) => {
+        const long_consumer = subscriber.on('planelong').onlyAfter(500).whenChanged().handle((long) => {
             this.planeLong = long;
         });
 
-        
+        this.addMapfeatures();
         this.updateWaypointvars();
         
     }
@@ -361,6 +353,45 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
         )
     }
 
+    addMapfeatures() {
+        
+        this.waypointlegline = L.polyline([[this.index > 0 ? this.task.get_wp(this.index - 1).lat : this.planeLat, this.index > 0 ? this.task.get_wp(this.index - 1).lon : this.planeLong],[this.waypoint.lat, this.waypoint.lon]], { 
+            color: colors.flightplanleg,
+            weight: 3 
+        }).addTo(Navmap!.map);
+
+        let angle, direction;
+        if(this.index == 0 ||  this.task.get_wp(this.index + 1) == null) {
+            angle = 360;
+            direction = 0;    
+        } else if(this.waypoint.obstype === "sector") {
+            let a = this.waypoint.bearingTo(this.task.get_wp(this.index - 1));
+            let b = this.waypoint.bearingTo(this.task.get_wp(this.index + 1));
+            let tempdir = 0;
+            if(Math.abs(a-b) < 180) {
+                let diff = Math.abs(a-b);
+                tempdir = a < b ? a + diff / 2 : b + diff / 2;    
+            } else {
+                let diff = 360 - Math.abs(a-b);
+                tempdir = a < b ? a - diff / 2 : b - diff / 2;
+            } 
+            
+            direction = (tempdir + 180) % 360;
+            console.log(this.waypoint.bearingTo(this.task.get_wp(this.index - 1)), this.waypoint.bearingTo(this.task.get_wp(this.index + 1)));
+            console.log(tempdir, direction);
+            angle = 90;
+            this.waypoint.radius = 20000;
+        } else {
+            angle = 360;
+            direction = 0;     
+        }
+
+        this.waypointmapmarker = new Semicircle([this.waypoint.lat, this.waypoint.lon])
+            .setStyle({ color: colors.flightplanleg, fillColor: colors.flightplanleg, fillOpacity: 0.3, radius: this.waypoint.radius })
+            .setDirection(direction, angle)
+            .addTo(Navmap!.map);
+
+    }
     updateWaypointvars() {
         this.currentBearing.set("transform: rotate(" + Math.round(this.bearing.get() - (staticvars.heading as number)) + "deg");
         
@@ -475,18 +506,22 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
 
     planeInsideWaypoint() {
         if(this.distance_m <= 0) return false;
-        if(this.waypoint.radius > this.distance_m && this.distance_m > 0) {
+
+        let pos = Navmap!.map.latLngToLayerPoint(L.latLng(this.planeLat, this.planeLong));
+        let isInside = this.waypointmapmarker._containsPoint(pos);
+
+        if(isInside) {
             this.isChecked = true;
-            return true;
-        } else {
-            return false;
         }
+
+        return isInside;
     }
 }
 
 interface WaypointInterface extends GeoPoint {
     name: string;
     alt: number;
+    obstype: string;
     radius: number;
     max_alt: number | null;
     min_alt: number | null; 
@@ -496,14 +531,16 @@ export class Waypoint extends GeoPoint implements WaypointInterface {
     public alt: number;
     public radius: number;
     public name: string;
+    public obstype: string;
     public max_alt: number | null;
     public min_alt: number | null;
     public arrivalheight: number;
-    constructor(lat: number, lon: number, alt: number, radius?: number, name?: string) {
+    constructor(lat: number, lon: number, alt: number, obstype: string, radius?: number, name?: string) {
         super(lat, lon);
         this.alt = alt;
         this.name = name ?? "Waypoint";
         this.radius = radius ?? 500;
+        this.obstype = obstype;
         this.max_alt = alt ?? null;
         this.min_alt = alt ?? null;
         this.arrivalheight = alt;
