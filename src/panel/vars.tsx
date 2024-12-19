@@ -58,11 +58,12 @@ export const vars: Variable[] = [
   { name: 'verticalwind', unittype: 'verticalspeed', simvar: 'A:AMBIENT WIND Y', shortlabel: 'V. WIND', label: 'Vertical Wind Speed', precision: 1, value: 0, family: 'wind' },
   { name: 'simtime', unittype: 'time', simvar: 'E:SIMULATION TIME', shortlabel: 'SIMTIME', label: 'Simulation Time', precision: 0, value: 0, family: 'timer' },
   { name: 'localtime', unittype: 'time', simvar: 'E:LOCAL TIME', shortlabel: 'LOCAL', label: 'Local Time', precision: 0, value: 0, family: 'timer' },
+  { name: 'tasktime', unittype: 'time', simvar: 'L:LXN_TASKTIME', shortlabel: 'TASK TIME', label: 'Task Time', precision: 0, value: 0, family: 'timer' },
   { name: 'wp_dist', unittype: 'distance', simvar: 'L:LXN_WP_DIST', shortlabel: 'WP DIST', label: 'Current Waypoint Distance', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_heading', unittype: 'angle', simvar: 'L:LXN_WP_HEADING', shortlabel: 'WP HDG', label: 'Current Waypoint Heading', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_arrival_height', unittype: 'altitude', simvar: 'L:LXN_WP_ARRIVAL_HEIGHT', shortlabel: 'WP ARR MSL', label: 'Estimated Arrival Height MSL', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_arrival_height_agl', unittype: 'altitude', simvar: 'L:LXN_WP_ARRIVAL_HEIGHT_AGL', shortlabel: 'WP ARR AGL', label: 'Estimated Arrival Height above Ground/WP Min', precision: 0, value: 0, family: 'waypoint' },
-  { name: 'wp_ete', unittype: 'time', simvar: 'L:LXN_WP_ETE', shortlabel: 'WP ETE', label: 'Estimated Time to Fly to Waypoint', precision: 0, value: 0, family: 'waypoint' },
+  { name: 'wp_ete', unittype: 'time', simvar: 'L:LXN_WP_ETE', shortlabel: 'WP ETE', label: 'Estimated Time to fly to Waypoint', precision: 0, value: 0, family: 'waypoint' },
 ]
 
 export const staticvars:{[key: string]: number|string} = {}
@@ -79,8 +80,8 @@ export const varfamilies = [
 export const colors = {
     activeleg: '#C60AC6',
     flightplanleg: '#ffcc00',
-    validwaypoint: '#00ff00',
-    missedwaypoint: '#ff0000',
+    validwaypoint: '#00cc00',
+    missedwaypoint: '#cc0000',
 }
 
 export interface FSEvents {
@@ -95,6 +96,7 @@ export interface FSEvents {
     windspeed: number;
     verticalwind: number;
     time: string;
+    simtime: number;
     planelat: number;
     planelong: number;
     altitude: number;

@@ -6,6 +6,7 @@ import { Navmap } from './interface';
 import * as L from "leaflet";
 import { Tasklist, Tasktemplate } from './tasklist';
 import { Semicircle } from '@mirei/leaflet-semicircle-ts';
+import { stat } from 'fs';
 
 
 
@@ -222,12 +223,31 @@ export class Task extends DisplayComponent<TaskProps> {
     public waypointlistref = FSComponent.createRef<HTMLDivElement>();
     public tasksearchref = FSComponent.createRef<HTMLDivElement>();
 
+    public isStarted: boolean = false;
+    public starttime: number = 0;
+    public endtime: number = 0;
+    public startindex: number = 0;
+    public finishindex: number = 0;
+
+    constructor(props: TaskProps) {
+        super(props);
+
+        const subscriber = this.eventBus.getSubscriber<FSEvents>();
+        const lat_consumer = subscriber.on('simtime').onlyAfter(500).whenChanged().handle((simtime) => {
+            if(this.isStarted) {
+                SimVar.SetSimVarValue("L:LXN_TASKTIME", "number", simtime - this.starttime);
+            }
+        });
+    }
+
     create(name: string, waypoints: Waypoint[]) {
         this.waypointentries.forEach((w) => { if (w.instance) w.instance.destroy(); });
         this.name.set(name);
         this.waypoints.set(waypoints);
         this.current_waypoint_index.set(0);
-        
+        this.finishindex = waypoints.length - 1;
+        this.isStarted = false;
+        SimVar.SetSimVarValue("L:LXN_TASKTIME", "number", 0);
     }
 
     public current_wp() {
@@ -242,18 +262,40 @@ export class Task extends DisplayComponent<TaskProps> {
         if(this.waypoints.get().length > this.current_waypoint_index.get()) {
             this.current_waypoint_index.set(this.current_waypoint_index.get() + 1);
         }
-        
+    }
+
+    public prev_wp() {
+        if(this.current_waypoint_index.get() > 0) {
+            this.current_waypoint_index.set(this.current_waypoint_index.get() - 1);
+        }
+    }
+
+    public starttask() {
+        this.isStarted = true;
+        this.starttime = staticvars.simtime as number;
+        this.status.set("Started");  
+    }
+
+    public endtask() {
+        this.isStarted = false;
+        this.endtime = staticvars.simtime as number;
+        this.status.set("Finished");
     }
 
     update() {
-        
+                
     }
     render() {
         return (
             <div>
                 <div class="taskheader">
-                    <h2>{this.name} - {this.current_waypoint_index} / {this.waypoints.get().length}</h2>
-                    <button id="tasksearch">Search</button>
+                    <h2>{this.name} - {this.status}</h2>
+                    <div class="taskbuttons">
+                        <button id="wpprev">WP -</button>
+                        <button id="wpnext">WP +</button>
+                        <button id="tasksearch">Search</button>
+                    </div>
+                    
                 </div>
                 
                 <div id="waypointlist" ref={this.waypointlistref}></div>
@@ -282,6 +324,8 @@ export class Task extends DisplayComponent<TaskProps> {
         })
 
         document.getElementById('tasksearch')?.addEventListener('click', () => this.showTasklist());
+        document.getElementById('wpprev')?.addEventListener('click', () => this.prev_wp());
+        document.getElementById('wpnext')?.addEventListener('click', () => this.next_wp());
     }
 } 
 
@@ -377,8 +421,6 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
             } 
             
             direction = (tempdir + 180) % 360;
-            console.log(this.waypoint.bearingTo(this.task.get_wp(this.index - 1)), this.waypoint.bearingTo(this.task.get_wp(this.index + 1)));
-            console.log(tempdir, direction);
             angle = 90;
             this.waypoint.radius = 20000;
         } else {
@@ -416,6 +458,11 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
 
             if(this.planeInsideWaypoint()) {
                 this.task.next_wp();
+                this.isChecked = true;
+                console.log("indexcheck: ", this.index, this.task.startindex)
+                if(this.index === this.task.startindex && this.index !== this.task.finishindex) {
+                    this.task.starttask();
+                }
             }
 
         } else {
@@ -479,7 +526,9 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
 
         this.task.get_wp(this.index).arrivalheight = this.arrivalheight.get();
 
-        SimVar.SetSimVarValue("L:LXN_WP_ETE", "s", ete_s);
+        if(this.isCurrentwaypoint()) {
+            SimVar.SetSimVarValue("L:LXN_WP_ETE", "s", ete_s);
+        }
 
     
     }
@@ -509,10 +558,6 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
 
         let pos = Navmap!.map.latLngToLayerPoint(L.latLng(this.planeLat, this.planeLong));
         let isInside = this.waypointmapmarker._containsPoint(pos);
-
-        if(isInside) {
-            this.isChecked = true;
-        }
 
         return isInside;
     }

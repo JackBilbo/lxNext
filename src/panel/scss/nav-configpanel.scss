@@ -111,12 +111,17 @@
             padding-right: 6rem;
         }
 
-        #tasksearch {
+        .taskbuttons {
             position:absolute;
             top: 0;
             right: 0;
-            width: auto;
-            padding: 0 0.5rem;
+            display:flex;
+            gap: 0.5rem;
+            
+            button {
+                width: auto;
+                padding: 0 0.5rem;
+            }
         }
     }
 

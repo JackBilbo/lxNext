@@ -42,7 +42,7 @@ export class Tasklist extends DisplayComponent<TaskListProps> {
                 <h2>Tasklist</h2>
                 <div class="idinput">
                     <input type="text" id="weglideid" placeholder="weglide ID" value={this.weGlideId}></input>
-                    <button id="weglideidsubmit">Search</button>
+                     <button id="weglideidsubmit">Load Tasks</button>
                 </div>
 
                 <div id="weglidetasks" ref={this.taskoutput}>
