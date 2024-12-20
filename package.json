@@ -37,7 +37,6 @@
     "@types/geojson": "^7946.0.14",
     "dotenv": "^16.4.5",
     "gridstack": "^7.1.1",
-    "leaflet": "^1.9.4",
-    "leaflet-semicircle": "^2.0.4"
+    "leaflet": "1.8.0"
   }
 }

@@ -155,7 +155,7 @@ export class Trail {
       const pair = [lat, long];
       coords.push(pair  as [number, number]);
 
-      if(coords.length > 3000) { coords.pop(); }
+      if(coords.length > 5000) { coords.shift(); }
   
       const l = coords.length;
       if (l < 2) return;
@@ -171,6 +171,6 @@ export class Trail {
         return this.line.addTo(this.map);
       }
 
-      this.line.addLatLng(pair);
+      this.line.setLatLngs([...coords]);
     }
   }
