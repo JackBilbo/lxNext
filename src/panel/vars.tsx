@@ -38,7 +38,7 @@ export const Units: UnitVariables = {
   'angle':  [{simunit: 'degrees', label: 'deg'}, {simunit: 'degrees', label: 'deg'}, {simunit: 'degrees', label: 'deg'}],
   'positionlat':  [{simunit: 'degrees latitude', label: 'deg'}, {simunit: 'degrees', label: 'deg'}, {simunit: 'degrees', label: 'deg'}],
   'positionlong':  [{simunit: 'degrees longitude', label: 'deg'}, {simunit: 'degrees', label: 'deg'}, {simunit: 'degrees', label: 'deg'}],
-  'weight':  [{simunit: 'lbs', label: 'lbs'}, {simunit: 'lbs', label: 'lbs'}, {simunit: 'kb', label: 'kg'}],
+  'weight':  [{simunit: 'lbs', label: 'lbs'}, {simunit: 'lbs', label: 'lbs'}, {simunit: 'kg', label: 'kg'}],
 }
 
 export const vars: Variable[] = [
@@ -51,6 +51,7 @@ export const vars: Variable[] = [
   { name: 'groundtrack', unittype: 'angle', simvar: 'GPS GROUND TRUE TRACK', shortlabel: 'TRK', label: 'Ground Track', precision: 0, value: 0, family: 'ac' },
   { name: 'groundspeed', unittype: 'speed', simvar: 'A:GPS GROUND SPEED', shortlabel: 'GND SPD', label: 'Ground Speed', precision: 0, value: 0, family: 'ac' },
   { name: 'stf', unittype: 'speed', simvar: 'L:LXN_STF', shortlabel: 'STF', label: 'Speed to Fly', precision: 0, value: 0, family: 'ac' },
+  { name: 'totalweight', unittype: 'weight', simvar: 'A:TOTAL WEIGHT', shortlabel: 'TOW', label: 'Totel Weight', precision: 0, value: 0, family: 'ac' },
   { name: 'planelat', unittype: 'positionlat', simvar: 'A:PLANE LATITUDE', shortlabel: 'LAT', label: 'Aircraft Latitude', precision: 0, value: 53, family: 'none' },
   { name: 'planelong', unittype: 'positionlong', simvar: 'A:PLANE LONGITUDE', shortlabel: 'LONG', label: 'Aircraft Longitude', precision: 0, value: 10, family: 'none' },
   { name: 'winddirection', unittype: 'angle', simvar: 'A:AMBIENT WIND DIRECTION', shortlabel: 'WIND', label: 'Wind Direction', precision: 0, value: 0, family: 'wind' },
@@ -58,7 +59,8 @@ export const vars: Variable[] = [
   { name: 'verticalwind', unittype: 'verticalspeed', simvar: 'A:AMBIENT WIND Y', shortlabel: 'V. WIND', label: 'Vertical Wind Speed', precision: 1, value: 0, family: 'wind' },
   { name: 'simtime', unittype: 'time', simvar: 'E:SIMULATION TIME', shortlabel: 'SIMTIME', label: 'Simulation Time', precision: 0, value: 0, family: 'timer' },
   { name: 'localtime', unittype: 'time', simvar: 'E:LOCAL TIME', shortlabel: 'LOCAL', label: 'Local Time', precision: 0, value: 0, family: 'timer' },
-  { name: 'tasktime', unittype: 'time', simvar: 'L:LXN_TASKTIME', shortlabel: 'TASK TIME', label: 'Task Time', precision: 0, value: 0, family: 'timer' },
+  { name: 'tasktime', unittype: 'time', simvar: 'L:LXN_TASKTIME', shortlabel: 'TASK TIME', label: 'Task Time', precision: 0, value: 0, family: 'task' },
+  { name: 'taskaverage', unittype: 'speed', simvar: 'L:LXN_TASKAVERAGE', shortlabel: 'TASK AVG', label: 'Task Average', precision: 0, value: 0, family: 'task' },
   { name: 'wp_dist', unittype: 'distance', simvar: 'L:LXN_WP_DIST', shortlabel: 'WP DIST', label: 'Current Waypoint Distance', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_heading', unittype: 'angle', simvar: 'L:LXN_WP_HEADING', shortlabel: 'WP HDG', label: 'Current Waypoint Heading', precision: 0, value: 0, family: 'waypoint' },
   { name: 'wp_arrival_height', unittype: 'altitude', simvar: 'L:LXN_WP_ARRIVAL_HEIGHT', shortlabel: 'WP ARR MSL', label: 'Estimated Arrival Height MSL', precision: 0, value: 0, family: 'waypoint' },
@@ -342,5 +344,22 @@ export interface FSEvents {
             sink_kts: -3.59
         },
         reference_weight_lbs: 1186
+    },
+    {
+        name: "Castel C25 S",
+        atc_model: "C25S",
+        minimum_sink: {
+            speed_kts: 33.5,
+            sink_kts: -1.419
+        },
+        best_glide: {
+            speed_kts: 37,
+            sink_kts: -1.48
+        },
+        fast: {
+            speed_kts: 81,
+            sink_kts: -6.23
+        },
+        reference_weight_lbs: 972
     }
 ]

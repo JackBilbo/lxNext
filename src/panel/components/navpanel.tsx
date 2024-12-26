@@ -222,6 +222,9 @@ export class Task extends DisplayComponent<TaskProps> {
     private waypointentries: NodeReference<WaypointDisplay>[] = [];
     public waypointlistref = FSComponent.createRef<HTMLDivElement>();
     public tasksearchref = FSComponent.createRef<HTMLDivElement>();
+    private totaldistance_m = 0;
+    private taskaverage = 0;
+    private distancetogo_m = Subject.create<number>(0);
 
     public isStarted: boolean = false;
     public starttime: number = 0;
@@ -236,18 +239,29 @@ export class Task extends DisplayComponent<TaskProps> {
         const lat_consumer = subscriber.on('simtime').onlyAfter(500).whenChanged().handle((simtime) => {
             if(this.isStarted) {
                 SimVar.SetSimVarValue("L:LXN_TASKTIME", "number", simtime - this.starttime);
+
+                let togo = 0
+                for (let i = this.current_waypoint_index.get(); i <= this.finishindex; i++ ) {
+                    togo += this.waypointentries[i].instance.distance_m;
+                }
+                this.distancetogo_m.set(Math.round(togo));
+                this.taskaverage = (this.totaldistance_m - togo) / (simtime - this.starttime);
+
+                SimVar.SetSimVarValue("L:LXN_TASKAVERAGE", "m/s", this.taskaverage); 
             }
         });
     }
 
     create(name: string, waypoints: Waypoint[]) {
         this.waypointentries.forEach((w) => { if (w.instance) w.instance.destroy(); });
+        this.finishindex = waypoints.length -1;
         this.name.set(name);
         this.waypoints.set(waypoints);
         this.current_waypoint_index.set(0);
-        this.finishindex = waypoints.length - 1;
         this.isStarted = false;
         SimVar.SetSimVarValue("L:LXN_TASKTIME", "number", 0);
+
+                
     }
 
     public current_wp() {
@@ -289,7 +303,7 @@ export class Task extends DisplayComponent<TaskProps> {
         return (
             <div>
                 <div class="taskheader">
-                    <h2>{this.name} - {this.status}</h2>
+                    <h2>{this.name} - {this.status} - {this.distancetogo_m} m to go</h2>
                     <div class="taskbuttons">
                         <button id="wpprev">WP -</button>
                         <button id="wpnext">WP +</button>
@@ -316,11 +330,21 @@ export class Task extends DisplayComponent<TaskProps> {
 
         this.waypoints.sub((ele) => {
             // this.waypointlistref.instance.innerHTML = "";
+            
             ele.forEach((wp,i) => {       
                 const wpref = FSComponent.createRef<WaypointDisplay>();
                 FSComponent.render(<WaypointDisplay ref={wpref} task={this} waypoint={wp} eventBus={this.eventBus} index={i} />, this.waypointlistref.instance);
-                this.waypointentries.push(wpref);
+                this.waypointentries[i] = wpref;
             })
+
+            if(this.startindex != this.finishindex) {
+                this.totaldistance_m = 0;
+                for (let i = this.startindex + 1; i <= this.finishindex; i++ ) {
+                    console.log(i + ": " + this.waypointentries[i].instance.name.get() + ": " + this.waypointentries[i].instance.distance_m);
+                    this.totaldistance_m += this.waypointentries[i].instance.distance_m;
+                }
+                this.distancetogo_m.set(Math.round(this.totaldistance_m));
+            }
         })
 
         document.getElementById('tasksearch')?.addEventListener('click', () => this.showTasklist());
@@ -380,6 +404,16 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
             this.planeLong = long;
         });
 
+        this.waypointclass.set("waypoint");
+                
+        if(this.index > 0) {
+            this.coursetofly = this.task.get_wp(this.index - 1).bearingTo(this.waypoint.lat, this.waypoint.lon);
+            this.distancetofly = this.task.get_wp(this.index - 1).distance(this.waypoint.lat, this.waypoint.lon) * earthradius[Units.distance[simUnits].simunit];
+            this.distance_m = this.task.get_wp(this.index - 1).distance(this.waypoint.lat, this.waypoint.lon) * earthradius['m'];
+            this.distance.set(Math.round(this.distancetofly));
+            this.bearing.set(Math.round(this.coursetofly));
+        }
+
         this.addMapfeatures();
         this.updateWaypointvars();
         
@@ -387,7 +421,7 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
     render(): VNode {
         return (
             <div ref={this.htmlref} class={this.waypointclass}>
-               <div class="wp_name">{this.name} ({this.alt} {this.altunit})</div>
+               <div class="wp_name">{this.index} {this.name} ({this.alt} {this.altunit}) {this.index == this.task.finishindex ? "Finish" : ""}{this.index == this.task.startindex ? "Start" : ""}</div>
                <div class="wp_minmax">min. {this.waypoint.min_alt} / max.{this.waypoint.max_alt}</div>
                <div class="wp_bearing">{this.bearing}&deg; <span style={this.currentBearing}>&uarr;</span></div>
                <div class="wp_distance">{this.distance} {this.unit}</div>
@@ -459,28 +493,18 @@ class WaypointDisplay extends DisplayComponent<WaypointDisplayProps> {
             if(this.planeInsideWaypoint()) {
                 this.task.next_wp();
                 this.isChecked = true;
-                console.log("indexcheck: ", this.index, this.task.startindex)
                 if(this.index === this.task.startindex && this.index !== this.task.finishindex) {
                     this.task.starttask();
+                }
+                if(this.index !== this.task.startindex && this.index === this.task.finishindex) {
+                    this.task.endtask();
                 }
             }
 
         } else {
             if(this.index > this.task.current_waypoint_index.get()) {
-                this.waypointlegline
-                .setLatLngs([[this.task.get_wp(this.index - 1).lat,  this.task.get_wp(this.index - 1).lon],[this.waypoint.lat, this.waypoint.lon]])
-                .setStyle({ color: colors.flightplanleg });
-
-                this.waypointmapmarker.setStyle({ color: colors.flightplanleg, fillColor: colors.flightplanleg });
-
-                this.waypointclass.set("waypoint");
-                
-                this.startaltitude = this.task.get_wp(this.index - 1).arrivalheight;
-                this.coursetofly = this.task.get_wp(this.index - 1).bearingTo(this.waypoint.lat, this.waypoint.lon);
-                this.distancetofly = this.task.get_wp(this.index - 1).distance(this.waypoint.lat, this.waypoint.lon) * earthradius[Units.distance[simUnits].simunit];
-                this.distance.set(Math.round(this.distancetofly));
-                this.bearing.set(Math.round(this.coursetofly));
             
+                this.startaltitude = this.task.get_wp(this.index - 1).arrivalheight;
             } else {
                 this.waypointlegline.remove();
                 this.waypointmapmarker.setStyle({ color: (this.isChecked ? colors.validwaypoint : colors.missedwaypoint), fillColor: (this.isChecked ? colors.validwaypoint : colors.missedwaypoint) });
